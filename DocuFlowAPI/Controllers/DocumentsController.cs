@@ -33,7 +33,7 @@
 
             var originalFileName = Path.GetFileNameWithoutExtension(dto.File.FileName);
             var extension = Path.GetExtension(dto.File.FileName);
-            var documentType = extension.TrimStart('.').ToLower(); // npr. "pdf"
+            var documentType = extension.TrimStart('.').ToLower();
 
             var existingVersions = _context.Documents
                 .Where(d => d.Project == dto.Project && d.FileName == dto.File.FileName)
@@ -60,7 +60,7 @@
                 UploadedBy = userName,
                 UploadedAt = DateTime.UtcNow,
                 DocumentType = documentType,
-                Status = "Draft", // inicijalni status
+                Status = "In Preparation", // ili "Draft"
                 CommentIds = new List<int>(),
                 ApprovedByUserId = null
             };
@@ -76,8 +76,6 @@
             });
         }
 
-
-        // Pregled svih dokumenata (opciono filtriranje po projektu)
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> GetAllDocuments([FromQuery] string? project)
@@ -99,14 +97,15 @@
                     d.Description,
                     d.Version,
                     d.UploadedBy,
-                    d.UploadedAt
+                    d.UploadedAt,
+                    d.DocumentType,
+                    d.Status
                 })
                 .ToListAsync();
 
             return Ok(documents);
         }
 
-        // Pretraga dokumenata po nazivu ili opisu
         [HttpGet("search")]
         [Authorize]
         public async Task<IActionResult> SearchDocuments([FromQuery] string query)
@@ -131,11 +130,109 @@
                     d.Description,
                     d.Version,
                     d.UploadedBy,
-                    d.UploadedAt
+                    d.UploadedAt,
+                    d.DocumentType,
+                    d.Status
                 })
                 .ToListAsync();
 
             return Ok(results);
         }
+
+        // 🔍 Napredna pretraga
+        [HttpGet("search/advanced")]
+        [Authorize]
+        public async Task<IActionResult> SearchAdvanced(
+            [FromQuery] string? documentType,
+            [FromQuery] string? status,
+            [FromQuery] DateTime? fromDate,
+            [FromQuery] DateTime? toDate)
+        {
+            var query = _context.Documents.AsQueryable();
+
+            if (!string.IsNullOrEmpty(documentType))
+            {
+                query = query.Where(d => d.DocumentType.ToLower() == documentType.ToLower());
+            }
+
+            if (!string.IsNullOrEmpty(status))
+            {
+                query = query.Where(d => d.Status.ToLower() == status.ToLower());
+            }
+
+            if (fromDate.HasValue)
+            {
+                query = query.Where(d => d.UploadedAt >= fromDate.Value);
+            }
+
+            if (toDate.HasValue)
+            {
+                query = query.Where(d => d.UploadedAt <= toDate.Value);
+            }
+
+            var results = await query
+                .OrderByDescending(d => d.UploadedAt)
+                .Select(d => new
+                {
+                    d.Id,
+                    d.FileName,
+                    d.Project,
+                    d.Description,
+                    d.Version,
+                    d.UploadedBy,
+                    d.UploadedAt,
+                    d.DocumentType,
+                    d.Status
+                })
+                .ToListAsync();
+
+            return Ok(results);
+        }
+
+        // 🔽 Sortiranje po datumu ili nazivu
+        [HttpGet("sort")]
+        [Authorize]
+        public async Task<IActionResult> SortDocuments(
+            [FromQuery] string sortBy = "date",  // "date" ili "name"
+            [FromQuery] string order = "desc"    // "asc" ili "desc"
+        )
+        {
+            var query = _context.Documents.AsQueryable();
+
+            switch (sortBy.ToLower())
+            {
+                case "name":
+                    query = order.ToLower() == "asc"
+                        ? query.OrderBy(d => d.FileName)
+                        : query.OrderByDescending(d => d.FileName);
+                    break;
+
+                case "date":
+                default:
+                    query = order.ToLower() == "asc"
+                        ? query.OrderBy(d => d.UploadedAt)
+                        : query.OrderByDescending(d => d.UploadedAt);
+                    break;
+            }
+
+            var results = await query
+                .Select(d => new
+                {
+                    d.Id,
+                    d.FileName,
+                    d.Project,
+                    d.Description,
+                    d.Version,
+                    d.UploadedBy,
+                    d.UploadedAt,
+                    d.DocumentType,
+                    d.Status
+                })
+                .ToListAsync();
+
+            return Ok(results);
+        }
+
     }
 }
+
