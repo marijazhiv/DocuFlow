@@ -26,6 +26,9 @@ namespace DocuFlowAPI.Controllers
             if (await _context.Users.AnyAsync(u => u.Username == request.Username))
                 return BadRequest("Username already exists.");
 
+            if (!Enum.TryParse<UserRole>(request.Role, true, out var parsedRole))
+                return BadRequest("Invalid role.");
+
             CreatePasswordHash(request.Password, out byte[] hash, out byte[] salt);
 
             var user = new User
@@ -33,7 +36,8 @@ namespace DocuFlowAPI.Controllers
                 Username = request.Username,
                 PasswordHash = hash,
                 PasswordSalt = salt,
-                Role = request.Role
+                Role = parsedRole,
+                Profession = request.Profession
             };
 
             _context.Users.Add(user);
@@ -41,6 +45,7 @@ namespace DocuFlowAPI.Controllers
 
             return Ok("Registration successful.");
         }
+
 
         [HttpPost("login")]
         public async Task<ActionResult<string>> Login(LoginDto request)

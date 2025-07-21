@@ -7,8 +7,16 @@ namespace DocuFlowAPI.Models
         public DataContext(DbContextOptions<DataContext> options) : base(options) { }
 
         public DbSet<User> Users { get; set; } = null!;
-
         public DbSet<Document> Documents => Set<Document>();
-    }
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // Enum kao string (umesto int)
+            modelBuilder.Entity<User>()
+                .Property(u => u.Role)
+                .HasConversion<string>();
+        }
+    }
 }

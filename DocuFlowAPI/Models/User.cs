@@ -6,7 +6,9 @@
         public string Username { get; set; } = null!;
         public byte[] PasswordHash { get; set; }
         public byte[] PasswordSalt { get; set; }
-        public string Role { get; set; } = "User"; // Default role
-    }
 
+        public UserRole Role { get; set; } = UserRole.Author;  // default: Author
+
+        public string Profession { get; set; } = string.Empty; // dodatno polje za zanimanje
+    }
 }
