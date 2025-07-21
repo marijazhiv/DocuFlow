@@ -33,6 +33,7 @@
 
             var originalFileName = Path.GetFileNameWithoutExtension(dto.File.FileName);
             var extension = Path.GetExtension(dto.File.FileName);
+            var documentType = extension.TrimStart('.').ToLower(); // npr. "pdf"
 
             var existingVersions = _context.Documents
                 .Where(d => d.Project == dto.Project && d.FileName == dto.File.FileName)
@@ -57,7 +58,11 @@
                 Description = dto.Description,
                 Version = version,
                 UploadedBy = userName,
-                UploadedAt = DateTime.UtcNow
+                UploadedAt = DateTime.UtcNow,
+                DocumentType = documentType,
+                Status = "Draft", // inicijalni status
+                CommentIds = new List<int>(),
+                ApprovedByUserId = null
             };
 
             _context.Documents.Add(document);
@@ -70,6 +75,7 @@
                 documentId = document.Id
             });
         }
+
 
         // Pregled svih dokumenata (opciono filtriranje po projektu)
         [HttpGet]

@@ -10,5 +10,11 @@
         public int Version { get; set; }
         public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
         public string UploadedBy { get; set; } = string.Empty;
+
+        // Novo:
+        public string DocumentType { get; set; } = string.Empty; // npr. "pdf", "docx", "dwg"
+        public string Status { get; set; } = "Draft"; // idiomatski umesto "In prepare"
+        public List<int> CommentIds { get; set; } = new(); // prazna lista ako nema komentara
+        public int? ApprovedByUserId { get; set; } // null dok se ne odobri
     }
 }
