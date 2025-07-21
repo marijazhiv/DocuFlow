@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Administrator\\DocuFlowAPI\\DocuFlowAPI.csproj": {}
+    "C:\\Users\\Administrator\\Desktop\\DocuFlow\\DocuFlowAPI\\DocuFlowAPI.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Administrator\\DocuFlowAPI\\DocuFlowAPI.csproj": {
+    "C:\\Users\\Administrator\\Desktop\\DocuFlow\\DocuFlowAPI\\DocuFlowAPI.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Administrator\\DocuFlowAPI\\DocuFlowAPI.csproj",
+        "projectUniqueName": "C:\\Users\\Administrator\\Desktop\\DocuFlow\\DocuFlowAPI\\DocuFlowAPI.csproj",
         "projectName": "DocuFlowAPI",
-        "projectPath": "C:\\Users\\Administrator\\DocuFlowAPI\\DocuFlowAPI.csproj",
+        "projectPath": "C:\\Users\\Administrator\\Desktop\\DocuFlow\\DocuFlowAPI\\DocuFlowAPI.csproj",
         "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Administrator\\DocuFlowAPI\\obj\\",
+        "outputPath": "C:\\Users\\Administrator\\Desktop\\DocuFlow\\DocuFlowAPI\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Administrator\\AppData\\Roaming\\NuGet\\NuGet.Config",

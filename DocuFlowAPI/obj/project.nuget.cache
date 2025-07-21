@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "UiCY0Uxg1wo=",
+  "dgSpecHash": "HXm8hhq5h8c=",
   "success": true,
-  "projectFilePath": "C:\\Users\\Administrator\\DocuFlowAPI\\DocuFlowAPI.csproj",
+  "projectFilePath": "C:\\Users\\Administrator\\Desktop\\DocuFlow\\DocuFlowAPI\\DocuFlowAPI.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Administrator\\.nuget\\packages\\humanizer.core\\2.8.26\\humanizer.core.2.8.26.nupkg.sha512",
     "C:\\Users\\Administrator\\.nuget\\packages\\microsoft.aspnetcore.authentication.jwtbearer\\6.0.25\\microsoft.aspnetcore.authentication.jwtbearer.6.0.25.nupkg.sha512",

@@ -7,6 +7,8 @@ namespace DocuFlowAPI.Models
         public DataContext(DbContextOptions<DataContext> options) : base(options) { }
 
         public DbSet<User> Users { get; set; } = null!;
+
+        public DbSet<Document> Documents => Set<Document>();
     }
 
 }
