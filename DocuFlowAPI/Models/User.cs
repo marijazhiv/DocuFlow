@@ -10,5 +10,8 @@
         public UserRole Role { get; set; } = UserRole.Author;  // default: Author
 
         public string Profession { get; set; } = string.Empty; // dodatno polje za zanimanje
+
+        public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
+
     }
 }

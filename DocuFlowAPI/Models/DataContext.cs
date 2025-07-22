@@ -9,6 +9,10 @@ namespace DocuFlowAPI.Models
         public DbSet<User> Users { get; set; } = null!;
         public DbSet<Document> Documents => Set<Document>();
 
+        public DbSet<Comment> Comments => Set<Comment>();
+        //public DbSet<Comment> Comments { get; set; } = null!;
+
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

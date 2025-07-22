@@ -69,6 +69,27 @@
   },
   {
     "ContainingType": "DocuFlowAPI.Controllers.DocumentsController",
+    "Method": "UpdateStatus",
+    "RelativePath": "api/Documents/{id}/status",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "dto",
+        "Type": "DocuFlowAPI.Models.UpdateDocumentStatusDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "DocuFlowAPI.Controllers.DocumentsController",
     "Method": "SearchDocuments",
     "RelativePath": "api/Documents/search",
     "HttpMethod": "GET",

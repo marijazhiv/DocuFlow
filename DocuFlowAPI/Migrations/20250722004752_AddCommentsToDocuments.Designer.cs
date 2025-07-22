@@ -3,6 +3,7 @@ using System;
 using DocuFlowAPI.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DocuFlowAPI.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20250722004752_AddCommentsToDocuments")]
+    partial class AddCommentsToDocuments
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -143,7 +145,7 @@ namespace DocuFlowAPI.Migrations
                         .IsRequired();
 
                     b.HasOne("DocuFlowAPI.Models.User", "User")
-                        .WithMany("Comments")
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -154,11 +156,6 @@ namespace DocuFlowAPI.Migrations
                 });
 
             modelBuilder.Entity("DocuFlowAPI.Models.Document", b =>
-                {
-                    b.Navigation("Comments");
-                });
-
-            modelBuilder.Entity("DocuFlowAPI.Models.User", b =>
                 {
                     b.Navigation("Comments");
                 });

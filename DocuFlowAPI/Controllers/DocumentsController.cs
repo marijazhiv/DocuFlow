@@ -60,10 +60,10 @@
                 UploadedBy = userName,
                 UploadedAt = DateTime.UtcNow,
                 DocumentType = documentType,
-                Status = "In Preparation", // ili "Draft"
-                CommentIds = new List<int>(),
+                Status = DocumentStatus.Draft,
                 ApprovedByUserId = null
             };
+
 
             _context.Documents.Add(document);
             await _context.SaveChangesAsync();
@@ -157,8 +157,16 @@
 
             if (!string.IsNullOrEmpty(status))
             {
-                query = query.Where(d => d.Status.ToLower() == status.ToLower());
+                if (Enum.TryParse<DocumentStatus>(status, true, out var statusEnum))
+                {
+                    query = query.Where(d => d.Status == statusEnum);
+                }
+                else
+                {
+                    return BadRequest("Invalid status value");
+                }
             }
+
 
             if (fromDate.HasValue)
             {
@@ -232,6 +240,77 @@
 
             return Ok(results);
         }
+
+        [HttpPut("{id}/status")]
+        [Authorize]
+        public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateDocumentStatusDto dto)
+        {
+            var document = await _context.Documents.Include(d => d.Comments).FirstOrDefaultAsync(d => d.Id == id);
+            if (document == null)
+                return NotFound();
+
+            var userName = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userName))
+                return Unauthorized();
+
+            var currentUser = await _context.Users.FirstOrDefaultAsync(u => u.Username == userName);
+            if (currentUser == null)
+                return Unauthorized();
+
+            // Provera role i pravila statusa
+            if (currentUser.Role == UserRole.Author)
+                return Forbid("Authors cannot change document status.");
+
+            if (currentUser.Role == UserRole.Reviewer)
+            {
+                if (dto.Status != DocumentStatus.WaitingApproval)
+                    return BadRequest("Reviewer can only set status to WaitingApproval.");
+            }
+
+            if (currentUser.Role == UserRole.Approver)
+            {
+                if (dto.Status != DocumentStatus.Approved && dto.Status != DocumentStatus.ReturnedForEdit)
+                    return BadRequest("Approver can only set status to Approved or ReturnedForEdit.");
+            }
+
+            document.Status = dto.Status;
+
+            if (dto.Status == DocumentStatus.Approved && currentUser.Role == UserRole.Approver)
+            {
+                document.ApprovedByUserId = currentUser.Id;
+            }
+            else if (dto.Status != DocumentStatus.Approved)
+            {
+                document.ApprovedByUserId = null;
+            }
+
+            // Komentar
+            string commentText;
+            if (string.IsNullOrWhiteSpace(dto.CommentContent))
+            {
+                commentText = $"Document reviewed by {currentUser.Username}, profession: {currentUser.Profession}";
+            }
+            else
+            {
+                commentText = dto.CommentContent.Trim();
+            }
+
+            var comment = new Comment
+            {
+                DocumentId = document.Id,
+                UserId = currentUser.Id,
+                Content = commentText,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Comments.Add(comment);
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Document status updated", status = document.Status.ToString() });
+        }
+
+
 
     }
 }
