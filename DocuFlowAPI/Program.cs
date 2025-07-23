@@ -80,6 +80,17 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+// 🔐 CORS konfiguracija (omogućava Angular frontendu pristup backendu)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:4200") // Angular default port
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
 
 // Dodaj kontrolere i Swagger
 builder.Services.AddControllers();
@@ -149,8 +160,9 @@ using (var scope = app.Services.CreateScope())
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// Middleware redosled
+// 🔗 Middleware redosled
 app.UseHttpsRedirection();
+app.UseCors("AllowFrontend"); // <--- dodato ovde
 app.UseAuthentication();
 app.UseAuthorization();
 

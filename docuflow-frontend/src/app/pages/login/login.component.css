@@ -10,7 +10,7 @@
 
 .parent{
   background-color: #c9d6ff;
-  background: linear-gradient(to right, #e2e2e2, #c9d6ff);
+  background: linear-gradient(90deg, #ffffff 0%, #5c6bc0 200%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -215,4 +215,18 @@
 
 .container.active .toggle-right{
   transform: translateX(200%);
+}
+.social-icons i.fa-brands {
+  font-family: "Font Awesome 6 Brands";
+  font-weight: 400;
+  font-style: normal;
+  font-size: 24px; /* možeš prilagoditi veličinu */
+  color: #333;      /* možeš promeniti boju po želji */
+  margin: 0 10px;   /* razmak između ikonica */
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.social-icons i.fa-brands:hover {
+  color: #5c6bc0; /* efekat hover, možeš izmeniti */
 }

@@ -48,7 +48,8 @@ namespace DocuFlowAPI.Controllers
 
 
         [HttpPost("login")]
-        public async Task<ActionResult<string>> Login(LoginDto request)
+        public async Task<ActionResult<string>> Login([FromBody] LoginDto request)
+
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
             if (user == null) return Unauthorized("Invalid username.");

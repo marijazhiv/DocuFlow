@@ -1,1 +1,43 @@
-<p>dashboard works!</p>
+<div class="dashboard-container" [ngClass]="!isSidebarOpen ? 'sidebar-collapsed' : ''">
+<nav class="sidebar" [class.open]="isSidebarOpen">
+    <div class="sidebar-header">
+      <h2>Menu</h2>
+
+    </div>
+    <ul class="nav-links">
+      <li><i class="fa-solid fa-gauge"></i> Dashboard</li>
+      <li><i class="fa-solid fa-user"></i> Profile</li>
+      <li><i class="fa-solid fa-folder"></i> Files</li>
+      <li><i class="fa-solid fa-bell"></i> Notifications</li>
+      <li><i class="fa-solid fa-list-check"></i> To Do</li>
+      <li><i class="fa-solid fa-users"></i> Users</li>
+      <li (click)="logout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</li>
+    </ul>
+  </nav>
+
+  <div class="main-content">
+    <header>
+      <i class="fa-solid fa-bars hamburger" (click)="toggleSidebar()"></i>
+      <h1>Welcome to Dashboard</h1>
+    </header>
+
+    <section class="file-grid">
+      <div class="file-card" *ngFor="let file of files">
+        <h2>{{ file.name }}</h2>
+        <p class="description">{{ file.description }}</p>
+        <p class="meta">
+          <i class="fa-regular fa-calendar"></i> {{ file.timestamp }}
+        </p>
+        <p class="meta">
+          <i class="fa-solid fa-user"></i> Author: {{ file.author }}
+        </p>
+        <p class="version">Version: {{ file.version }}</p>
+        <p class="status" [ngClass]="file.status.toLowerCase()">{{ file.status }}</p>
+        <button>Details</button>
+      </div>
+    </section>
+  </div>
+</div>
+
+
+
