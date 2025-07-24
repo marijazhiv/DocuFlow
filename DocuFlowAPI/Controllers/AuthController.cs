@@ -37,8 +37,11 @@ namespace DocuFlowAPI.Controllers
                 PasswordHash = hash,
                 PasswordSalt = salt,
                 Role = parsedRole,
-                Profession = request.Profession
+                Profession = request.Profession,
+                FirstName = request.FirstName,
+                LastName = request.LastName
             };
+
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();

@@ -19,20 +19,37 @@ namespace DocuFlowAPI.Controllers
             _context = context;
         }
 
-        [HttpGet]
+        /*[HttpGet]
         public async Task<ActionResult<IEnumerable<User>>> GetAllUsers()
         {
             return await _context.Users.ToListAsync();
+        }*/
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<UserDto>>> GetAllUsers()
+        {
+            var users = await _context.Users
+                .Select(u => new UserDto
+                {
+                    Id = u.Id,
+                    Username = u.Username,
+                    FirstName = u.FirstName,
+                    LastName = u.LastName,
+                    Profession = u.Profession,
+                    Role = u.Role.ToString()
+                })
+                .ToListAsync();
+
+            return Ok(users);
         }
 
         [HttpPost("create")]
         public async Task<ActionResult> CreateUser(RegisterDto dto)
         {
             if (await _context.Users.AnyAsync(u => u.Username == dto.Username))
-                return BadRequest("Username already exists.");
+                return BadRequest(new { error = "Username already exists." });
 
             if (!Enum.TryParse<UserRole>(dto.Role, true, out var parsedRole))
-                return BadRequest("Invalid role.");
+                return BadRequest(new { error = "Invalid role." });
 
             using var hmac = new HMACSHA512();
             var user = new User
@@ -41,13 +58,15 @@ namespace DocuFlowAPI.Controllers
                 PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(dto.Password)),
                 PasswordSalt = hmac.Key,
                 Role = parsedRole,
-                Profession = dto.Profession
+                Profession = dto.Profession,
+                FirstName = dto.FirstName,
+                LastName = dto.LastName
             };
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            return Ok("User created.");
+            return Ok(new { message = "User created." });
         }
 
 
@@ -75,6 +94,16 @@ namespace DocuFlowAPI.Controllers
         {
             var roles = Enum.GetNames(typeof(UserRole));
             return Ok(roles);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<User>> GetUser(int id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+                return NotFound(new { error = "User not found." });
+
+            return Ok(user);
         }
 
 

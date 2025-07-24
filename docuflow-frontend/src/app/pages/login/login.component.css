@@ -66,14 +66,26 @@
   border-color: #fff;
 }
 
-.container form{
+.container form {
   background-color: #fff;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start; /* ← bitno da ne forsira vertikalno centriranje */
   flex-direction: column;
   padding: 0 40px;
   height: 100%;
+  overflow-y: auto;      /* omogućava scroll */
+  max-height: 100%;      /* ograničava visinu da ostane u containteru */
+  scrollbar-width: thin; /* za Firefox */
+}
+
+/* (opciono) za lepši scroll u Webkit browserima kao Chrome */
+.container form::-webkit-scrollbar {
+  width: 6px;
+}
+.container form::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.2);
+  border-radius: 3px;
 }
 
 .container input{
@@ -111,6 +123,24 @@
   z-index: 1;
   transition: all 0.5s;
 }
+
+.container select {
+  background-color: #eee;
+  border: none;
+  margin: 8px 0;
+  padding: 10px 15px;
+  font-size: 13px;
+  border-radius: 8px;
+  width: 100%;
+  outline: none;
+  /* dodaj ovo za poravnanje levo kao input */
+  text-align: left;
+  appearance: none; /* da izgleda konzistentno */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+}
+
 
 .container.active .sign-up{
   transform: translateX(100%);

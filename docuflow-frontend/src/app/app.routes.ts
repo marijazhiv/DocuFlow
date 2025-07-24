@@ -10,6 +10,10 @@
 //   { path: 'dashboard', component: DashboardComponent }
 // ];
 import { Routes } from '@angular/router';
+import {LayoutComponent} from "./layout/layout.component";
+import {DashboardComponent} from "./pages/dashboard/dashboard.component";
+import {UsersComponent} from "./pages/users/users.component";
+import {DocumentsComponent} from "./pages/documents/documents.component";
 
 export const routes: Routes = [
   {
@@ -20,8 +24,29 @@ export const routes: Routes = [
   {
     path: 'login',
     loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent)
-  }, {
-    path: 'dashboard',
-    loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent)
-  }
+  },
+  {
+    path: '',
+    component: LayoutComponent,
+    children: [
+      { path: 'dashboard', component: DashboardComponent },
+      //{ path: 'profile', component: ProfileComponent },
+       { path: 'documents', component: DocumentsComponent },
+      //{ path: 'notifications', component: NotificationsComponent },
+      //{ path: 'todo', component: TodoComponent },
+      { path: 'users', component: UsersComponent }
+    ]
+  },
+  {
+    path: 'documents/:id',
+    loadComponent: () => import('./pages/document-viewer.component').then(m => m.DocumentViewerComponent)
+  },
+
+  /*{
+    path: 'documents/:id',
+    loadComponent: () =>
+      import('./pages/document-viewer.component').then(
+        (m) => m.DocumentViewerComponent
+      )
+  }*/
 ];

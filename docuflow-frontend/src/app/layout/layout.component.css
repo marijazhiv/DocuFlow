@@ -1,11 +1,101 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
 
+/* Globalni reset i font */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Montserrat', serif;
+}
+
+/* Font Awesome fix */
+.fa-solid {
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  font-style: normal;
+}
+.fa-regular {
+  font-family: "Font Awesome 6 Free";
+  font-weight: 400;
+  font-style: normal;
+}
+.fa-brands {
+  font-family: "Font Awesome 6 Brands";
+  font-weight: 400;
+  font-style: normal;
+}
+
+/* Kontejner koji uključuje sidebar i main */
+.dashboard-container {
+  display: flex;
+  height: 100vh;
+  background: linear-gradient(90deg, #ffffff 0%, #5c6bc0 200%);
+  transition: all 0.3s ease-in-out;
+}
+
+/* Sidebar u normalnom (otvorenom) stanju */
+.sidebar {
+  width: 250px;
+  background: linear-gradient(90deg, #ffffff 0%, #ffffff 85%);
+  padding: 20px;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease-in-out;
+}
+
+/* Kada je sidebar zatvoren */
+.dashboard-container.sidebar-collapsed .sidebar {
+  width: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Header sidebar-a */
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+/* X ikonica */
+.close-icon {
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* Navigacija */
+.nav-links {
+  list-style: none;
+}
+
+.nav-links li {
+  padding: 12px 10px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.3s ease;
+  font-weight: 500;
+  color: #333;
+}
+
+.nav-links li:hover {
+  background-color: #f0f0f0;
+  color: #5c6bc0;
+}
+
+.nav-links i {
+  margin-right: 12px;
+  width: 20px;
+  text-align: center;
+}
 
 /* Glavni sadržaj */
 .main-content {
   flex: 1;
   padding: 30px;
-
+  overflow-y: auto;
   max-height: 100vh;
   transition: margin-left 0.3s ease-in-out;
 
@@ -16,6 +106,18 @@
   margin-left: 0;
 }
 
+/* Header u main-contentu */
+header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.hamburger {
+  font-size: 24px;
+  margin-right: 20px;
+  cursor: pointer;
+}
 
 /* Ostali stilovi */
 .content-area {
@@ -139,6 +241,5 @@
 .file-card button:hover {
   opacity: 0.9;
 }
-
 
 

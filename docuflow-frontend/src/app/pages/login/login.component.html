@@ -9,11 +9,44 @@
           <a href="#" class="icon"><i class="fa-brands fa-github"></i></a>
           <a href="#" class="icon"><i class="fa-brands fa-linkedin-in"></i></a>
         </div>
-        <span>or use your email for registeration</span>
-        <input type="text" name="name" [(ngModel)]="signUpObj.name" placeholder="Name">
-        <input type="email" name="email" [(ngModel)]="signUpObj.email" placeholder="Email">
-        <input type="password" name="password"  [(ngModel)]="signUpObj.password" placeholder="Password">
-        <button (click)="onRegister()">Sign Up</button>
+        <span>or use your email for registration</span>
+
+        <input type="text" placeholder="First Name" [(ngModel)]="signUpObj.firstName" name="firstName">
+        <input type="text" placeholder="Last Name" [(ngModel)]="signUpObj.lastName" name="lastName">
+        <input type="text" placeholder="Username" [(ngModel)]="signUpObj.username" name="username">
+        <input type="password" placeholder="Password" [(ngModel)]="signUpObj.password" name="password">
+
+        <select id="professionSelect" [(ngModel)]="selectedProfession" name="professionSelect" (change)="onProfessionChange($event)">
+          <option value="" disabled selected>Select Profession</option>
+          <option value="Software Engineer">Software Engineer</option>
+          <option value="Team Leader">Team Leader</option>
+          <option value="QA Tester">QA Tester</option>
+          <option value="Other">Other</option>
+        </select>
+
+        <!-- Polje za unos ako je Other -->
+        <input *ngIf="selectedProfession === 'Other'"
+               type="text"
+               placeholder="Enter your profession"
+               [(ngModel)]="signUpObj.profession"
+               name="professionInput" />
+
+        <!-- Ako nije Other, automatski setujemo signUpObj.profession -->
+        <input *ngIf="selectedProfession !== 'Other'"
+               type="hidden"
+               [(ngModel)]="signUpObj.profession" />
+
+        <select [(ngModel)]="signUpObj.role" name="role">
+          <option value="" disabled selected>Select Role</option>
+          <option value="Administrator">Administrator</option>
+          <option value="Author">Author</option>
+          <option value="Reviewer">Reviewer</option>
+          <option value="Reviewer">Approver</option>
+          <option value="Reviewer">User</option>
+        </select>
+
+        <button type="submit" (click)="onRegister()">Sign Up</button>
+
       </form>
     </div>
     <div class="form-container sign-in" >

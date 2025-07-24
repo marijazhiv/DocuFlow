@@ -23,9 +23,12 @@ export class LoginComponent {
   };
 
   signUpObj = {
-    name: '',
-    email: '',
-    password: ''
+    firstName: '',
+    lastName: '',
+    username: '',
+    password: '',
+    role: '',
+    profession: ''
   };
 
   constructor(private authService: AuthService, private router: Router) {}
@@ -50,16 +53,44 @@ export class LoginComponent {
     });
   }
 
+  selectedProfession: string = '';
+
+  onProfessionChange(event: Event) {
+    const value = (event.target as HTMLSelectElement).value;
+    if (value !== 'Other') {
+      this.signUpObj.profession = value;
+    } else {
+      this.signUpObj.profession = '';
+    }
+  }
 
   onRegister() {
-    const registerData = {
-      username: this.signUpObj.email,
-      password: this.signUpObj.password,
-      role: 'Author',
-      profession: this.signUpObj.name
-    };
+    this.authService.register(this.signUpObj).subscribe({
+      next: (res: any) => {
+        if (res && res.message) {
+          alert(res.message);
+        } else {
+          alert('Registration successful!');
+        }
+        this.isSignDivVisiable = false;
+      },
+      error: (err) => {
+        let errorMessage = 'Registration failed';
 
-    this.authService.register(registerData).subscribe({
+        if (err.error && err.error.error) {
+          errorMessage = err.error.error;
+        } else if (typeof err.error === 'string') {
+          errorMessage = err.error;
+        }
+
+        alert(errorMessage);
+      }
+    });
+  }
+
+
+
+  /*this.authService.register(registerData).subscribe({
       next: () => {
         alert('Registration successful!');
         this.isSignDivVisiable = false;
@@ -68,6 +99,6 @@ export class LoginComponent {
         alert('Registration failed: ' + err.error);
       }
     });
-  }
+  }*/
 }
 

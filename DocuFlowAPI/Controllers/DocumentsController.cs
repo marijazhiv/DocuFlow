@@ -241,6 +241,20 @@
             return Ok(results);
         }
 
+        [HttpGet("{id}/stream")]
+        [Authorize]
+        public async Task<IActionResult> StreamDocument(int id)
+        {
+            var document = await _context.Documents.FindAsync(id);
+            if (document == null || !System.IO.File.Exists(document.FilePath))
+                return NotFound("Document not found");
+
+            var stream = new FileStream(document.FilePath, FileMode.Open, FileAccess.Read);
+            return File(stream, "application/pdf");
+        }
+
+
+
         [HttpPut("{id}/status")]
         [Authorize]
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateDocumentStatusDto dto)

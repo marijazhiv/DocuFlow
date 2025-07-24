@@ -1,0 +1,55 @@
+<div class="users-container">
+  <header class="users-header">
+    <h1>Users</h1>
+    <div class="actions">
+      <input
+        type="text"
+        placeholder="Search users..."
+        [(ngModel)]="searchText"
+        [disabled]="showDialog"
+      />
+
+      <button (click)="openDialog()">Create User</button>
+
+    </div>
+  </header>
+
+  <section class="user-list">
+    <div class="user-item" *ngFor="let user of filteredUsers">
+      <div class="left">
+        <div class="user-icon">
+          <i class="fa-solid fa-user"></i>
+        </div>
+        <div class="info">
+          <p><strong>{{ user.username }}</strong></p>
+          <p>Name:{{ user.firstName + ' ' + user.lastName }}  </p>
+          <p>Role: {{ user.role }}</p>
+          <p>Profession: {{ user.profession }}</p>
+        </div>
+      </div>
+
+      <div class="user-actions-vertical">
+        <button class="edit-btn">Edit</button>
+        <button class="delete-btn" (click)="deleteUser(user)">Delete</button>
+      </div>
+    </div>
+
+  </section>
+  <div class="dialog-backdrop" *ngIf="showDialog">
+    <div class="dialog">
+      <h2>Create New User</h2>
+      <input type="text" placeholder="First Name" [(ngModel)]="newUser.firstName" />
+      <input type="text" placeholder="Last Name" [(ngModel)]="newUser.lastName" />
+      <input type="text" placeholder="Username" [(ngModel)]="newUser.username" />
+      <input type="password" placeholder="Password" [(ngModel)]="newUser.password" />
+      <input type="text" placeholder="Role" [(ngModel)]="newUser.role" />
+      <input type="text" placeholder="Profession" [(ngModel)]="newUser.profession" />
+
+      <div class="dialog-actions">
+        <button class="create-btn" (click)="createUser()">Create</button>
+        <button class="cancel-btn" (click)="closeDialog()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -1,7 +1,18 @@
-import { Component } from '@angular/core';
+import {Component, inject} from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import {CommonModule} from "@angular/common";
+import {DocumentsService} from "../../services/documents.service";
+
+interface DocumentFile {
+  id: number;
+  name: string;
+  description: string;
+  timestamp: string;
+  author: string;
+  version: number;
+  status: string;
+}
 
 @Component({
   selector: 'app-dashboard',
@@ -11,54 +22,65 @@ import {CommonModule} from "@angular/common";
   imports: [CommonModule]
 })
 export class DashboardComponent {
+  files: DocumentFile[] = [];
+
+
+  // Umesto constructor, injektuj servise kao polja:
+  private documentsService = inject(DocumentsService);
+  private authService = inject(AuthService);
+  private router = inject(Router);
+
   isSidebarOpen = true;
-  files = [
-    {
-      name: 'Report.pdf',
-      description: 'Monthly financial report',
-      timestamp: '2025-07-22 14:30',
-      author: 'Marija Živanović',
-      version: 'v1.1',
-      status: 'Active'
-    },
-    {
-      name: 'DraftProposal.docx',
-      description: 'Initial draft for new proposal',
-      timestamp: '2025-07-18 10:15',
-      author: 'Nikola Petrović',
-      version: 'v0.9',
-      status: 'Draft'
-    },
-    {
-      name: 'DesignArchive.png',
-      description: 'Previous version of design elements',
-      timestamp: '2025-06-30 09:00',
-      author: 'Ivana Milić',
-      version: 'v2.0',
-      status: 'Archived'
-    },
-    {
-      name: 'DesignArchive.png',
-      description: 'Previous version of design elements',
-      timestamp: '2025-06-30 09:00',
-      author: 'Ivana Milić',
-      version: 'v2.0',
-      status: 'Archived'
-    }
-  ];
 
+  statusMap: { [key: number]: string } = {
+    0: 'Draft',
+    1: 'WaitingApproval',
+    2: 'Approved',
+    3: 'ReturnedForEdit'
+  };
 
+  ngOnInit() {
+    this.loadDocuments();
+  }
 
-  constructor(private authService: AuthService, private router: Router) {}
+  loadDocuments() {
+    this.documentsService.getAllDocuments().subscribe({
+      next: (docs) => {
+        this.files = docs.map(doc => ({
+          id: doc.id,
+          name: doc.fileName,
+          description: doc.description,
+          timestamp: new Date(doc.uploadedAt).toLocaleDateString(),
+          author: doc.uploadedBy,
+          version: doc.version,
+          status: this.statusMap[doc.status] || 'Unknown'
+        }));
+      },
+      error: (err) => {
+        console.error('Error loading documents:', err);
+      }
+    });
+  }
+  //constructor(private authService: AuthService, private router: Router) {}
 
   toggleSidebar() {
     this.isSidebarOpen = !this.isSidebarOpen;
   }
 
+  goToUsers() {
+    this.router.navigate(['/users']);
+  }
+
+
   logout() {
     this.authService.logout();
     this.router.navigate(['/login']);
   }
+
+  viewDocument(id: number) {
+    this.router.navigate(['/documents', id]); // moraš imati rutu /documents/:id
+  }
+
 }
 
 
