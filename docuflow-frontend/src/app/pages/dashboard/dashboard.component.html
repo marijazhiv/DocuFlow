@@ -15,7 +15,8 @@
         <p class="version">Version: {{ file.version }}</p>
         <p class="status" [ngClass]="file.status.toLowerCase()">{{ file.status }}</p>
         <button>Details</button>
-        <button (click)="viewDocument(file.id)">View</button>
+        <button (click)="viewDocument(file.id, file.type)">View</button>
+
 
       </div>
     </section>

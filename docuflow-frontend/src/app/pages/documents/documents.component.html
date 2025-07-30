@@ -2,32 +2,62 @@
   <div class="main-content">
 
     <!-- Filter bar -->
-    <div class="documents-filter-bar">
-      <input type="text" placeholder="Search documents..." [(ngModel)]="searchText" />
+    <div class="main-content">
 
-      <select [(ngModel)]="selectedType">
-        <option value="">All Types</option>
-        <option value="report">Report</option>
-        <option value="invoice">Invoice</option>
-        <option value="contract">Contract</option>
-      </select>
+      <!-- Filter bar -->
+      <div class="documents-filter-bar">
+        <input
+          type="text"
+          placeholder="Search documents..."
+          [(ngModel)]="searchText"
+          (input)="loadDocuments()"
+        />
 
-      <input type="date" [(ngModel)]="selectedDate" />
+        <select [(ngModel)]="selectedType" (change)="loadDocuments()">
+          <option value="">All Types</option>
+          <option value="pdf">PDF</option>
+          <option value="docx">DOCX</option>
+          <option value="dwg">DWG</option>
+        </select>
 
-      <select [(ngModel)]="sortOption">
-        <option value="name">Sort by Name</option>
-        <option value="date">Sort by Date</option>
-        <option value="author">Sort by Author</option>
-      </select>
+        <select [(ngModel)]="selectedStatus" (change)="loadDocuments()">
+          <option value="">All Statuses</option>
+          <option value="Draft">Draft</option>
+          <option value="WaitingApproval">Waiting for Approval</option>
+          <option value="Approved">Approved</option>
+          <option value="ReturnedForEdit">Returned for Edit</option>
+        </select>
 
-      <button class="upload-btn" (click)="onUploadClick()" data-tooltip="Upload Document">
+        <label>
+          From:
+          <input type="date" [(ngModel)]="fromDate" (change)="loadDocuments()" />
+        </label>
+
+        <label>
+          To:
+          <input type="date" [(ngModel)]="toDate" (change)="loadDocuments()" />
+        </label>
+
+        <select [(ngModel)]="sortOption" (change)="loadDocuments()">
+          <option value="date-desc">Sort by Date ↓</option>
+          <option value="date-asc">Sort by Date ↑</option>
+          <option value="name-asc">Sort by Name A-Z</option>
+          <option value="name-desc">Sort by Name Z-A</option>
+        </select>
+
+
+
+
+
+        <button class="upload-btn" (click)="onUploadClick()" data-tooltip="Upload Document">
         <i class="fa-solid fa-upload"></i>
       </button>
     </div>
 
+
     <!-- File cards -->
     <section class="file-grid">
-      <div class="file-card" *ngFor="let file of filteredFiles">
+      <div class="file-card" *ngFor="let file of files">
         <h2>{{ file.name }}</h2>
         <p class="description">{{ file.description }}</p>
         <p class="meta">
@@ -40,12 +70,14 @@
         <p class="status" [ngClass]="file.status.toLowerCase()">{{ file.status }}</p>
 
         <div class="file-card-actions">
-          <button class="details-btn" data-tooltip="Details">
+          <button class="details-btn" data-tooltip="Details" (click)="openComments(file.id)">
             <i class="fa-solid fa-info"></i>
           </button>
-          <button class="status-btn" data-tooltip="Change Status">
+
+          <button class="status-btn" data-tooltip="Change Status" (click)="openDocumentDialog(file)">
             <i class="fa-solid fa-exchange-alt"></i>
           </button>
+
           <button class="comment-btn" data-tooltip="Comment">
             <i class="fa-solid fa-comment"></i>
           </button>
@@ -74,6 +106,46 @@
       <button class="create-btn" (click)="uploadDocument()">Upload</button>
       <button class="cancel-btn" (click)="closeUploadDialog()">Cancel</button>
     </div>
+  </div>
+</div>
+
+
+<!-- Comments Modal -->
+<div class="modal-backdrop" *ngIf="showCommentsDialog" (click)="closeComments()"></div>
+
+<div class="comments-dialog" *ngIf="showCommentsDialog">
+  <h3>Comments for Document #{{ selectedDocumentId }}</h3>
+  <button class="close-btn" (click)="closeComments()">&times;</button>
+
+  <div *ngIf="comments.length === 0">
+    <p>No comments found.</p>
+  </div>
+
+  <div *ngFor="let comment of comments" class="comment-item">
+    <p><strong>{{ comment.user.username }}</strong> - {{ comment.createdAt | date:'medium' }}</p>
+    <p>{{ comment.content }}</p>
+    <hr/>
+  </div>
+</div>
+</div>
+
+<!-- Document Viewer Modal -->
+<div class="modal-backdrop" *ngIf="showDocumentDialog" (click)="closeDocumentDialog()"></div>
+
+<div class="document-dialog" *ngIf="showDocumentDialog">
+  <button class="close-btn" (click)="closeDocumentDialog()">&times;</button>
+
+  <div *ngIf="dialogType === 'pdf' && dialogFileUrl" class="pdf-container">
+    <iframe [src]="dialogFileUrl" frameborder="0"></iframe>
+  </div>
+
+  <div *ngIf="dialogType === 'docx' && dialogFileUrl" class="docx-container">
+    <iframe [src]="dialogFileUrl" frameborder="0"></iframe>
+  </div>
+
+  <div *ngIf="dialogType !== 'pdf' && dialogType !== 'docx'">
+    <p>Preview nije dostupan za {{ dialogType?.toUpperCase() }} fajlove.</p>
+    <a [href]="dialogFileUrl" target="_blank" download>Download {{ dialogType?.toUpperCase() }} file</a>
   </div>
 </div>
 

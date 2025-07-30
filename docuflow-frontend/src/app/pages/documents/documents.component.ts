@@ -1,106 +1,138 @@
-import { Component } from '@angular/core';
-import {CommonModule, NgClass} from "@angular/common";
-import {FormsModule} from "@angular/forms";
+import { Component, inject } from '@angular/core';
+import { CommonModule, NgClass } from "@angular/common";
+import { FormsModule } from "@angular/forms";
+import { DocumentsService } from "../../services/documents.service";
+import { AuthService } from "../../services/auth.service";
+import { Router } from "@angular/router";
+import { DocumentFile } from "../dashboard/dashboard.component";
+import { CommentsService, Comment as CommentModel } from "../../services/comments.service";
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
-interface File {
-  name: string;
-  description: string;
-  timestamp: string; // format: "YYYY-MM-DD" ili "YYYY-MM-DDTHH:mm:ss"
-  author: string;
-  version: string;
-  status: string;
-  type: string; // za filter (npr. 'report', 'invoice', 'contract')
-}
 @Component({
   selector: 'app-documents',
   standalone: true,
   imports: [
     NgClass,
     FormsModule,
-     CommonModule
+    CommonModule
   ],
   templateUrl: './documents.component.html',
-  styleUrl: './documents.component.css'
+  styleUrls: ['./documents.component.css']
 })
 export class DocumentsComponent {
   isSidebarOpen = true;
-
+  files: DocumentFile[] = [];
   searchText: string = '';
   selectedType: string = '';
+  selectedStatus: string = '';
+  fromDate: string = '';  // ISO format yyyy-MM-dd
+  toDate: string = '';
   selectedDate: string = '';
-  sortOption: string = 'name';
 
-  files: File[] = [
-    {
-      name: 'Annual Report 2024',
-      description: 'Company annual financial report.',
-      timestamp: '2025-07-01',
-      author: 'John Doe',
-      version: '1.0',
-      status: 'active',
-      type: 'report'
-    },
-    {
-      name: 'Invoice #12345',
-      description: 'Invoice for client ABC Corp.',
-      timestamp: '2025-06-15',
-      author: 'Jane Smith',
-      version: '1.2',
-      status: 'draft',
-      type: 'invoice'
-    },
-    {
-      name: 'Contract with Supplier',
-      description: 'Signed contract agreement.',
-      timestamp: '2025-05-20',
-      author: 'Michael Johnson',
-      version: '2.0',
-      status: 'archived',
-      type: 'contract'
-    },
-    {
-      name: 'Invoice #12345',
-      description: 'Invoice for client ABC Corp.',
-      timestamp: '2025-06-15',
-      author: 'Jane Smith',
-      version: '1.2',
-      status: 'draft',
-      type: 'invoice'
+  private documentsService = inject(DocumentsService);
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  private commentsService = inject(CommentsService);
+  private http = inject(HttpClient);
+  private sanitizer = inject(DomSanitizer);
+
+  statusMap: { [key: number]: string } = {
+    0: 'Draft',
+    1: 'WaitingApproval',
+    2: 'Approved',
+    3: 'ReturnedForEdit'
+  };
+
+  ngOnInit() {
+    this.loadDocuments();
+  }
+
+  sortOption: string = 'date-desc'; // podrazumevano sortiranje
+
+  loadDocuments() {
+    const [sortBy, order] = this.sortOption.split('-');
+    const hasAdvancedFilters = this.selectedType || this.selectedStatus || this.fromDate || this.toDate;
+
+    if (this.searchText && this.searchText.trim() !== '') {
+      this.documentsService.searchDocuments({
+        query: this.searchText.trim(),
+        sortBy,
+        order
+      }).subscribe({
+        next: (docs) => this.files = docs.map(doc => this.mapDocToFile(doc)),
+        error: (err) => console.error('Error searching documents:', err)
+      });
+    } else if (hasAdvancedFilters) {
+      const params: any = { sortBy, order };
+      if (this.selectedType) params.documentType = this.selectedType;
+      if (this.selectedStatus) params.status = this.selectedStatus;
+      if (this.fromDate) params.fromDate = this.fromDate;
+      if (this.toDate) params.toDate = this.toDate;
+
+      this.documentsService.searchAdvanced(params).subscribe({
+        next: (docs) => this.files = docs.map(doc => this.mapDocToFile(doc)),
+        error: (err) => console.error('Error loading advanced filtered documents:', err)
+      });
+    } else {
+      this.documentsService.sortDocuments(sortBy, order).subscribe({
+        next: (docs) => this.files = docs.map(doc => this.mapDocToFile(doc)),
+        error: (err) => console.error('Error loading sorted documents:', err)
+      });
     }
-    // Dodaj još fajlova po potrebi
-  ];
+  }
 
-  get filteredFiles(): File[] {
-    let files = this.files;
+  private mapDocToFile(doc: any): DocumentFile {
+    return {
+      id: doc.id,
+      name: doc.fileName,
+      description: doc.description,
+      timestamp: new Date(doc.uploadedAt).toLocaleDateString(),
+      author: doc.uploadedBy,
+      version: doc.version,
+      status: this.statusMap[doc.status] || 'Unknown',
+      type: doc.documentType
+    };
+  }
 
-    if (this.searchText) {
-      files = files.filter(f =>
-        f.name.toLowerCase().includes(this.searchText.toLowerCase())
-      );
-    }
+  handleDocumentsResponse(docs: any[]) {
+    this.files = docs.map(doc => ({
+      id: doc.id,
+      name: doc.fileName,
+      description: doc.description,
+      timestamp: new Date(doc.uploadedAt).toLocaleDateString(),
+      author: doc.uploadedBy,
+      version: doc.version,
+      status: this.statusMap[doc.status] || 'Unknown',
+      type: doc.documentType
+    })) as DocumentFile[];
+  }
 
-    if (this.selectedType) {
-      files = files.filter(f => f.type === this.selectedType);
-    }
+  showCommentsDialog = false;
+  comments: CommentModel[] = [];
+  selectedDocumentId: number | null = null;
 
-    if (this.selectedDate) {
-      // Provera samo početka datuma, možeš prilagoditi po potrebi
-      files = files.filter(f => f.timestamp.startsWith(this.selectedDate));
-    }
+  openComments(documentId: number) {
+    this.selectedDocumentId = documentId;
+    this.loadComments(documentId);
+    this.showCommentsDialog = true;
+  }
 
-    switch (this.sortOption) {
-      case 'name':
-        files = files.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case 'date':
-        files = files.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
-        break;
-      case 'author':
-        files = files.sort((a, b) => a.author.localeCompare(b.author));
-        break;
-    }
+  closeComments() {
+    this.showCommentsDialog = false;
+    this.comments = [];
+    this.selectedDocumentId = null;
+  }
 
-    return files;
+  loadComments(documentId: number) {
+    this.commentsService.getCommentsForDocument(documentId)
+      .subscribe({
+        next: (data) => this.comments = data,
+        error: (err) => {
+          console.error('Error loading comments', err);
+          this.comments = [];
+        }
+      });
   }
 
   toggleSidebar() {
@@ -108,37 +140,102 @@ export class DocumentsComponent {
   }
 
   showUploadDialog = false;
-
   uploadData = {
     project: '',
-    description: '',
-    file: null as File | null
+    description: ''
   };
+  selectedFile: File | null = null;
 
-  onUploadClick() {
+  onUploadClick(): void {
     this.showUploadDialog = true;
   }
 
-  closeUploadDialog() {
+  closeUploadDialog(): void {
     this.showUploadDialog = false;
-    this.uploadData = { project: '', description: '', file: null };
+    this.uploadData = { project: '', description: '' };
+    this.selectedFile = null;
   }
 
-  onFileSelected(event: any) {
-    const file: File = event.target.files[0];
+  onFileSelected(event: any): void {
+    const file = event.target.files[0];
     if (file) {
-      this.uploadData.file = file;
+      this.selectedFile = file;
     }
   }
 
-  uploadDocument() {
-    if (!this.uploadData.project || !this.uploadData.file) {
-      alert('Please fill in project and select a file.');
+  uploadDocument(): void {
+    if (!this.selectedFile) {
+      alert("Please select a file.");
       return;
     }
-    // Upload logic ovde...
 
-    alert(`Uploading document: ${this.uploadData.project}, file: ${this.uploadData.file.name}`);
-    this.closeUploadDialog();
+    const formData = new FormData();
+    formData.append('file', this.selectedFile);
+    formData.append('project', this.uploadData.project);
+    formData.append('description', this.uploadData.description);
+
+    this.documentsService.uploadDocument(formData).subscribe({
+      next: (response) => {
+        alert('Upload successful! Version: ' + response.version);
+        this.closeUploadDialog();
+        this.loadDocuments();
+      },
+      error: (err) => {
+        console.error('Upload failed', err);
+        alert('Upload failed.');
+      }
+    });
+  }
+
+  // ********** OVDE DODAJEMO KOD ZA PRIKAZ PDF MODALA **********
+
+  showDocumentDialog = false;
+  dialogFileUrl: SafeResourceUrl | null = null;
+  dialogType: string | null = null;
+
+  openDocumentDialog(file: DocumentFile) {
+    this.dialogType = file.type.toLowerCase();
+
+    const token = this.authService.getToken();
+    if (!token) {
+      console.error('No JWT token found!');
+      return;
+    }
+
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${token}`
+    });
+
+    this.http.get(`https://localhost:7053/api/Documents/${file.id}/stream`, {
+      headers,
+      responseType: 'blob'
+    }).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+
+        if (this.dialogType === 'pdf') {
+          this.dialogFileUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+        } else if (this.dialogType === 'docx') {
+          const googleDocsUrl = `https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`;
+          this.dialogFileUrl = this.sanitizer.bypassSecurityTrustResourceUrl(googleDocsUrl);
+        } else {
+          // Za DWG i ostale formate
+          this.dialogFileUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+        }
+
+        this.showDocumentDialog = true;
+      },
+      error: (err) => {
+        console.error('Error loading document blob:', err);
+      }
+    });
+  }
+
+  closeDocumentDialog() {
+    this.showDocumentDialog = false;
+    this.dialogFileUrl = null;
+    this.dialogType = null;
   }
 }
+
+

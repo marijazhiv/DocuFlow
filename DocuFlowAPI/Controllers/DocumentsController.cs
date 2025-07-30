@@ -108,20 +108,33 @@
 
         [HttpGet("search")]
         [Authorize]
-        public async Task<IActionResult> SearchDocuments([FromQuery] string query)
+        public async Task<IActionResult> SearchDocuments(
+    [FromQuery] string query,
+    [FromQuery] string sortBy = "date",  // ← dodato
+    [FromQuery] string order = "desc")   // ← dodato
         {
             if (string.IsNullOrWhiteSpace(query))
-            {
                 return BadRequest("Query parameter is required");
-            }
 
             var lowerQuery = query.ToLower();
 
-            var results = await _context.Documents
+            var searchResults = _context.Documents
                 .Where(d =>
                     d.FileName.ToLower().Contains(lowerQuery) ||
-                    (d.Description != null && d.Description.ToLower().Contains(lowerQuery)))
-                .OrderByDescending(d => d.UploadedAt)
+                    (d.Description != null && d.Description.ToLower().Contains(lowerQuery)));
+
+            // SORTIRANJE
+            searchResults = sortBy.ToLower() switch
+            {
+                "name" => order.ToLower() == "asc"
+                    ? searchResults.OrderBy(d => d.FileName)
+                    : searchResults.OrderByDescending(d => d.FileName),
+                _ => order.ToLower() == "asc"
+                    ? searchResults.OrderBy(d => d.UploadedAt)
+                    : searchResults.OrderByDescending(d => d.UploadedAt)
+            };
+
+            var results = await searchResults
                 .Select(d => new
                 {
                     d.Id,
@@ -139,14 +152,16 @@
             return Ok(results);
         }
 
-        // 🔍 Napredna pretraga
+
         [HttpGet("search/advanced")]
         [Authorize]
         public async Task<IActionResult> SearchAdvanced(
-            [FromQuery] string? documentType,
-            [FromQuery] string? status,
-            [FromQuery] DateTime? fromDate,
-            [FromQuery] DateTime? toDate)
+    [FromQuery] string? documentType,
+    [FromQuery] string? status,
+    [FromQuery] DateTime? fromDate,
+    [FromQuery] DateTime? toDate,
+    [FromQuery] string sortBy = "date",     // ← dodato
+    [FromQuery] string order = "desc")      // ← dodato
         {
             var query = _context.Documents.AsQueryable();
 
@@ -167,19 +182,28 @@
                 }
             }
 
-
             if (fromDate.HasValue)
             {
-                query = query.Where(d => d.UploadedAt >= fromDate.Value);
+                query = query.Where(d => d.UploadedAt >= fromDate.Value.ToUniversalTime());
             }
 
             if (toDate.HasValue)
             {
-                query = query.Where(d => d.UploadedAt <= toDate.Value);
+                query = query.Where(d => d.UploadedAt <= toDate.Value.ToUniversalTime());
             }
 
+            // SORTIRANJE
+            query = sortBy.ToLower() switch
+            {
+                "name" => order.ToLower() == "asc"
+                    ? query.OrderBy(d => d.FileName)
+                    : query.OrderByDescending(d => d.FileName),
+                _ => order.ToLower() == "asc"
+                    ? query.OrderBy(d => d.UploadedAt)
+                    : query.OrderByDescending(d => d.UploadedAt)
+            };
+
             var results = await query
-                .OrderByDescending(d => d.UploadedAt)
                 .Select(d => new
                 {
                     d.Id,
@@ -316,10 +340,12 @@
                 Content = commentText,
                 CreatedAt = DateTime.UtcNow
             };
-
+            document.Comments.Add(comment);
             _context.Comments.Add(comment);
 
             await _context.SaveChangesAsync();
+
+
 
             return Ok(new { message = "Document status updated", status = document.Status.ToString() });
         }

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { NgIf } from '@angular/common';
@@ -8,9 +8,23 @@ import { AuthService } from '../services/auth.service';
 @Component({
   selector: 'app-document-viewer',
   template: `
-    <div *ngIf="pdfUrl; else loading" class="pdf-container">
-      <iframe [src]="pdfUrl" frameborder="0"></iframe>
+    <div class="toolbar">
+      <i class="fa-solid fa-arrow-left back-icon" (click)="goBack()"></i>
     </div>
+
+    <div *ngIf="type === 'pdf' && fileUrl" class="pdf-container">
+      <iframe [src]="fileUrl" frameborder="0"></iframe>
+    </div>
+
+    <div *ngIf="type === 'docx' && fileUrl" class="docx-container">
+      <iframe [src]="fileUrl" frameborder="0"></iframe>
+    </div>
+
+    <div *ngIf="type === 'dwg' && downloadUrl" class="dwg-container">
+      <p>Preview nije dostupan za DWG fajlove.</p>
+      <a [href]="downloadUrl" target="_blank" download>Download DWG file</a>
+    </div>
+
     <ng-template #loading>
       <p>Loading document...</p>
     </ng-template>
@@ -20,12 +34,24 @@ import { AuthService } from '../services/auth.service';
   styles: [`
     :host {
       display: flex;
-      flex-grow: 1;
-      height: 100%;
+      flex-direction: column;
+      height: 100vh;
     }
-    .pdf-container {
+    .toolbar {
+      padding: 10px;
+      background-color: #ffffff;
+      border-bottom: 1px solid #ddd;
+    }
+    .back-icon {
+      font-size: 20px;
+      color: #5c6bc0;
+      cursor: pointer;
+    }
+    .back-icon:hover {
+      color: #0056b3;
+    }
+    .pdf-container, .docx-container, .dwg-container {
       flex-grow: 1;
-      height: 100vh; /* popuni ceo vidljivi deo */
     }
     iframe {
       width: 100%;
@@ -35,11 +61,14 @@ import { AuthService } from '../services/auth.service';
   `]
 })
 export class DocumentViewerComponent implements OnInit {
-  pdfUrl: SafeResourceUrl | null = null;
+  fileUrl: SafeResourceUrl | null = null;
+  downloadUrl: string | null = null;
+  type: string | null = null;
   documentId!: number;
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private http: HttpClient,
     private authService: AuthService,
     private sanitizer: DomSanitizer
@@ -48,14 +77,21 @@ export class DocumentViewerComponent implements OnInit {
   ngOnInit() {
     this.route.paramMap.subscribe(params => {
       const idParam = params.get('id');
-      if (idParam) {
-        this.documentId = +idParam;
-        this.loadPdf(this.documentId);
-      }
+      this.route.queryParamMap.subscribe(queryParams => {
+        const typeParam = queryParams.get('type');
+
+        if (idParam && typeParam) {
+          this.documentId = +idParam;
+          this.type = typeParam.toLowerCase();
+          this.loadDocument(this.documentId);
+        } else {
+          console.error('Missing document id or type in URL.');
+        }
+      });
     });
   }
 
-  loadPdf(id: number) {
+  loadDocument(id: number) {
     const token = this.authService.getToken();
     if (!token) {
       console.error('No JWT token found!');
@@ -71,12 +107,26 @@ export class DocumentViewerComponent implements OnInit {
       responseType: 'blob'
     }).subscribe({
       next: (blob) => {
-        const url = URL.createObjectURL(blob);
-        this.pdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+        this.downloadUrl = URL.createObjectURL(blob);
+
+        if (this.type === 'pdf') {
+          this.fileUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.downloadUrl);
+        } else if (this.type === 'docx') {
+          const googleDocsUrl = `https://docs.google.com/gview?url=${encodeURIComponent(this.downloadUrl)}&embedded=true`;
+          this.fileUrl = this.sanitizer.bypassSecurityTrustResourceUrl(googleDocsUrl);
+        } else {
+          // DWG i ostalo – samo link za preuzimanje
+          this.fileUrl = null;
+        }
       },
       error: (err) => {
-        console.error('Error loading PDF:', err);
+        console.error('Error loading document blob:', err);
       }
     });
   }
+
+  goBack() {
+    this.router.navigateByUrl('/dashboard');
+  }
 }
+

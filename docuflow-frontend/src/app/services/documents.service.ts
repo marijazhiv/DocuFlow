@@ -1,6 +1,6 @@
 // src/app/services/documents.service.ts
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import {HttpClient, HttpParams} from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface Document {
@@ -30,5 +30,51 @@ export class DocumentsService {
     }
     return this.http.get<Document[]>(url);
   }
+
+  getAllDocumentsForSearch(params?: any): Observable<Document[]> {
+    return this.http.get<Document[]>(`${this.apiUrl}/search/advanced`, { params });
+  }
+
+  uploadDocument(formData: FormData): Observable<any> {
+    return this.http.post(`${this.apiUrl}/upload`, formData);
+  }
+
+ /* searchAdvanced(params: any) {
+    return this.http.get<any[]>(`${this.apiUrl}/search/advanced`, { params });
+  }
+  searchDocuments(query: string) {
+    const params = { query };
+    return this.http.get<any[]>(`${this.apiUrl}/search`, { params });
+  }
+
+  sortDocuments(sortBy: string, order: string) {
+    return this.http.get<any[]>(`${this.apiUrl}/sort`, {
+      params: {
+        sortBy,
+        order
+      }
+    });
+  }
+*/
+
+  searchDocuments(params: any) {
+    return this.http.get<any[]>(`${this.apiUrl}/search`, { params });
+  }
+
+  searchAdvanced(params: any) {
+    return this.http.get<any[]>(`${this.apiUrl}/search/advanced`, { params });
+  }
+
+  sortDocuments(sortBy: string, order: string) {
+    return this.http.get<any[]>(`${this.apiUrl}/sort`, {
+      params: { sortBy, order }
+    });
+  }
+
+
+
+
+
+
 }
 

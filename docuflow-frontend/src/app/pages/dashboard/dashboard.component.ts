@@ -4,7 +4,7 @@ import { AuthService } from '../../services/auth.service';
 import {CommonModule} from "@angular/common";
 import {DocumentsService} from "../../services/documents.service";
 
-interface DocumentFile {
+export interface DocumentFile {
   id: number;
   name: string;
   description: string;
@@ -12,6 +12,7 @@ interface DocumentFile {
   author: string;
   version: number;
   status: string;
+  type:string;
 }
 
 @Component({
@@ -53,8 +54,10 @@ export class DashboardComponent {
           timestamp: new Date(doc.uploadedAt).toLocaleDateString(),
           author: doc.uploadedBy,
           version: doc.version,
-          status: this.statusMap[doc.status] || 'Unknown'
-        }));
+          status: this.statusMap[doc.status] || 'Unknown',
+          type: doc.documentType
+        })) as DocumentFile[]; // ⬅️ Kastovanje
+        ;
       },
       error: (err) => {
         console.error('Error loading documents:', err);
@@ -77,9 +80,10 @@ export class DashboardComponent {
     this.router.navigate(['/login']);
   }
 
-  viewDocument(id: number) {
-    this.router.navigate(['/documents', id]); // moraš imati rutu /documents/:id
+  viewDocument(fileId: number, documentType: string) {
+    this.router.navigate(['/documents', fileId], { queryParams: { type: documentType } });
   }
+
 
 }
 
