@@ -1,27 +1,76 @@
 <div class="dashboard-container" [ngClass]="!isSidebarOpen ? 'sidebar-collapsed' : ''">
-
   <div class="main-content">
 
-    <section class="file-grid">
-      <div class="file-card" *ngFor="let file of files">
-        <h2>{{ file.name }}</h2>
-        <p class="description">{{ file.description }}</p>
-        <p class="meta">
-          <i class="fa-regular fa-calendar"></i> {{ file.timestamp }}
-        </p>
-        <p class="meta">
-          <i class="fa-solid fa-user"></i> Author: {{ file.author }}
-        </p>
-        <p class="version">Version: {{ file.version }}</p>
-        <p class="status" [ngClass]="file.status.toLowerCase()">{{ file.status }}</p>
-        <button>Details</button>
-        <button (click)="viewDocument(file.id, file.type)">View</button>
+    <!-- Grupisani prikaz fajlova po projektu -->
+    <section class="file-group" *ngFor="let project of groupedFilesKeys()">
+      <h2 class="project-heading">
+        <i class="fa-solid fa-diagram-project"></i> {{ project }}
+      </h2>
 
+      <div class="file-grid">
+        <div class="file-card" *ngFor="let file of groupedFilesByProject[project]">
+          <h2>{{ file.name }}</h2>
 
+          <p class="project">
+            <i class="fa-solid fa-diagram-project"></i> {{ file.project }}
+          </p>
+
+          <p class="description">{{ file.description }}</p>
+
+          <p class="meta">
+            <i class="fa-regular fa-calendar"></i> {{ file.timestamp }}
+          </p>
+
+          <p class="meta">
+            <i class="fa-solid fa-user"></i> Author: {{ file.author }}
+          </p>
+
+          <p class="version">Version: {{ file.version }}</p>
+
+          <p class="status" [ngClass]="file.status.toLowerCase()">{{ file.status }}</p>
+
+          <button class="status-btn" data-tooltip="Details" (click)="openDocumentDialog(file)">
+            <i class="fa-solid fa-file-alt"></i>
+          </button>
+
+          <button
+            *ngIf="file.status.toLowerCase() !== 'archived'"
+            class="archive-btn"
+            data-tooltip="Archive"
+            (click)="archiveDocument(file)">
+            <i class="fa-solid fa-box-archive"></i>
+          </button>
+
+        </div>
       </div>
     </section>
+
   </div>
 </div>
+
+<!-- Document Viewer Modal -->
+<div class="modal-backdrop" *ngIf="showDocumentDialog" (click)="closeDocumentDialog()"></div>
+
+<div class="document-dialog" *ngIf="showDocumentDialog">
+  <button class="close-btn" (click)="closeDocumentDialog()">&times;</button>
+
+  <div *ngIf="dialogType === 'pdf' && dialogFileUrl" class="pdf-container">
+    <iframe [src]="dialogFileUrl" frameborder="0"></iframe>
+  </div>
+
+  <div *ngIf="dialogType === 'docx' && dialogFileUrl" class="docx-container">
+    <iframe [src]="dialogFileUrl" frameborder="0"></iframe>
+  </div>
+
+  <div *ngIf="dialogType !== 'pdf' && dialogType !== 'docx'">
+    <p>Preview nije dostupan za {{ dialogType?.toUpperCase() }} fajlove.</p>
+    <a [href]="dialogFileUrl" target="_blank" download>
+      Download {{ dialogType?.toUpperCase() }} file
+    </a>
+  </div>
+</div>
+
+
 
 
 

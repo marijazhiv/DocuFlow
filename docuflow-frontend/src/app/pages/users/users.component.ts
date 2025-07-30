@@ -19,7 +19,7 @@ export interface User {
   passwordSalt: string;
   role: number;
   profession: string;
-  comments: any[]; // ili preciznije ako imaš definisan model za komentar
+  comments: any[];
 }
 
 
@@ -57,16 +57,16 @@ export class UsersComponent {
 
   loadUsers() {
     const token = localStorage.getItem('jwtToken');
-    console.log('📦 JWT token koji se šalje:', token);
+    console.log('JWT token koji se šalje:', token);
 
     this.userService.getAllUsers().subscribe({
       next: (data) => {
-        console.log('✅ Učitani korisnici:', data);
+        console.log('Učitani korisnici:', data);
         this.users = data;
         this.filteredUsers = data;
       },
       error: (err) => {
-        console.error('❌ Greška pri učitavanju korisnika:', err);
+        console.error('Greška pri učitavanju korisnika:', err);
       }
     });
   }
@@ -79,6 +79,33 @@ export class UsersComponent {
     this.showDialog = false;
     this.resetNewUser();
   }
+  userRoles: string[] = ['Author', 'Reviewer', 'Approver', 'Administrator', 'User'];
+
+  professions: string[] = [
+    'Software Engineer',
+    'Senior Engineer',
+    'Tech Lead',
+    'Project Manager',
+    'HR Lead',
+    'QA Engineer',
+    'UX/UI Designer',
+    'DevOps Engineer',
+    'Business Analyst',
+    'Product Manager',
+    'Other'
+  ];
+
+  selectedProfession: string = '';
+
+
+  onProfessionChange(): void {
+    if (this.selectedProfession !== 'Other') {
+      this.newUser.profession = this.selectedProfession;
+    } else {
+      this.newUser.profession = '';
+    }
+  }
+
 
   resetNewUser() {
     this.newUser = {
@@ -90,18 +117,33 @@ export class UsersComponent {
       profession: ''
     };
   }
+  snackbarMessage: string = '';
+  showSnackbar: boolean = false;
+
+  showSuccessSnackbar(message: string) {
+    this.snackbarMessage = message;
+    this.showSnackbar = true;
+
+    setTimeout(() => {
+      this.showSnackbar = false;
+    }, 3000); // automatski nestane posle 3 sekunde
+  }
+
 
   createUser() {
     this.userService.createUser(this.newUser).subscribe({
       next: () => {
         this.loadUsers();
         this.closeDialog();
+        this.showSuccessSnackbar('User successfully created.');
       },
       error: (err) => {
         alert('Error creating user: ' + err.error);
       }
     });
   }
+
+
 
   deleteUser(user: User) {
     this.userService.deleteUser(user.id).subscribe(() => {

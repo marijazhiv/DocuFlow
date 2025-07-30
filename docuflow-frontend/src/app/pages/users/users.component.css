@@ -179,3 +179,61 @@
   font-size: 13px;
   cursor: pointer;
 }
+
+select,
+input[type="text"],
+input[type="password"],
+input[type="hidden"] {
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+select:focus,
+input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 3px rgba(0, 123, 255, 0.3);
+}
+
+.dialog select {
+  margin-top: 5px;
+}
+
+.dialog input[type="text"]:not(:placeholder-shown) {
+  background-color: #f9f9f9;
+}
+
+.dialog .optional-input {
+  display: block;
+  margin-top: -5px;
+  font-size: 13px;
+  color: #666;
+}
+
+.snackbar {
+  visibility: hidden;
+  min-width: 250px;
+  background-color: #323232;
+  color: #fff;
+  text-align: center;
+  border-radius: 8px;
+  padding: 14px 24px;
+  position: fixed;
+  left: 50%;
+  bottom: 30px;
+  transform: translateX(-50%);
+  z-index: 999;
+  font-size: 16px;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out, bottom 0.3s ease-in-out;
+}
+
+.snackbar.show {
+  visibility: visible;
+  opacity: 1;
+  bottom: 50px;
+}

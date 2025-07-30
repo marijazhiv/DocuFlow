@@ -15,6 +15,11 @@ export interface Document {
   documentType?: string;
 }
 
+export interface UpdateDocumentStatusDto {
+  status?: number;          // status može biti null/undefined ako menjaš samo komentar
+  commentContent: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -70,7 +75,12 @@ export class DocumentsService {
       params: { sortBy, order }
     });
   }
-
+  updateDocumentStatus(id: number, dto: UpdateDocumentStatusDto) {
+    return this.http.put(`${this.apiUrl}/${id}/status`, dto);
+  }
+  archiveDocument(documentId: number) {
+    return this.http.post(`${this.apiUrl}/${documentId}/archive`, {});
+  }
 
 
 

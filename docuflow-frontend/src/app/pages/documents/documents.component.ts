@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule, NgClass } from "@angular/common";
 import { FormsModule } from "@angular/forms";
-import { DocumentsService } from "../../services/documents.service";
+import {DocumentsService, UpdateDocumentStatusDto} from "../../services/documents.service";
 import { AuthService } from "../../services/auth.service";
 import { Router } from "@angular/router";
 import { DocumentFile } from "../dashboard/dashboard.component";
@@ -41,7 +41,8 @@ export class DocumentsComponent {
     0: 'Draft',
     1: 'WaitingApproval',
     2: 'Approved',
-    3: 'ReturnedForEdit'
+    3: 'ReturnedForEdit',
+    4: 'Archived'
   };
 
   ngOnInit() {
@@ -86,6 +87,7 @@ export class DocumentsComponent {
     return {
       id: doc.id,
       name: doc.fileName,
+        project: doc.project,
       description: doc.description,
       timestamp: new Date(doc.uploadedAt).toLocaleDateString(),
       author: doc.uploadedBy,
@@ -192,6 +194,12 @@ export class DocumentsComponent {
   showDocumentDialog = false;
   dialogFileUrl: SafeResourceUrl | null = null;
   dialogType: string | null = null;
+  newCommentContent: any;
+  selectedStatusForComment: any;
+  showCommentInputDialog: any;
+  commentTargetDocumentId: any;
+  newCommentText: any;
+  newCommentStatus: any;
 
   openDocumentDialog(file: DocumentFile) {
     this.dialogType = file.type.toLowerCase();
@@ -231,11 +239,79 @@ export class DocumentsComponent {
     });
   }
 
+
+
   closeDocumentDialog() {
     this.showDocumentDialog = false;
     this.dialogFileUrl = null;
     this.dialogType = null;
   }
+
+
+  openCommentInputDialog(documentId: number) {
+    this.commentTargetDocumentId = documentId;
+    this.selectedDocumentId = documentId; // opcionalno, ako koristiš selectedDocumentId u drugim delovima
+    this.newCommentText = '';
+    this.newCommentStatus = '';
+    this.showCommentInputDialog = true;
+  }
+
+
+  closeCommentInputDialog() {
+    this.showCommentInputDialog = false;
+    this.commentTargetDocumentId = null;
+    this.newCommentText = '';
+    this.newCommentStatus = '';
+  }
+  statusMap2: { [key: number]: string } = {
+    0: 'Draft',
+    1: 'WaitingApproval',
+    2: 'Approved',
+    3: 'ReturnedForEdit',
+      4: 'Archived'
+  };
+
+  statusStringToNumberMap: { [key: string]: number } = {
+    'Draft': 0,
+    'WaitingApproval': 1,
+    'Approved': 2,
+    'ReturnedForEdit': 3,
+      'Archived': 4
+  };
+
+  updateStatusAndComment(documentId: number, commentContent: string, status?: string) {
+    if (!commentContent?.trim() && !status) {
+      alert('You must provide a comment or select a status.');
+      return;
+    }
+
+    const dto: UpdateDocumentStatusDto = {
+      commentContent: commentContent.trim(),
+    };
+
+    if (status) {
+      const statusNum = this.statusStringToNumberMap[status];
+      if (statusNum === undefined) {
+        alert('Invalid status selected.');
+        return;
+      }
+      dto.status = statusNum;
+    }
+
+    this.documentsService.updateDocumentStatus(documentId, dto).subscribe({
+      next: (res) => {
+        alert('Successfully updated comment and/or status.');
+        this.closeComments();
+        this.loadDocuments();
+      },
+      error: (err) => {
+        console.error('Error updating status/comment:', err);
+        alert('Failed to update status or add comment.');
+      }
+    });
+  }
+
+
 }
 
 

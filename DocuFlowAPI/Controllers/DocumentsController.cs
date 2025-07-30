@@ -277,8 +277,6 @@
             return File(stream, "application/pdf");
         }
 
-
-
         [HttpPut("{id}/status")]
         [Authorize]
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateDocumentStatusDto dto)
@@ -295,42 +293,49 @@
             if (currentUser == null)
                 return Unauthorized();
 
-            // Provera role i pravila statusa
-            if (currentUser.Role == UserRole.Author)
-                return Forbid("Authors cannot change document status.");
-
-            if (currentUser.Role == UserRole.Reviewer)
+            // Ako je prosleđen status, vršimo provere i ažuriranje
+            if (dto.Status != null)
             {
-                if (dto.Status != DocumentStatus.WaitingApproval)
-                    return BadRequest("Reviewer can only set status to WaitingApproval.");
+                if (currentUser.Role == UserRole.Author)
+                    return Forbid("Authors cannot change document status.");
+
+                if (currentUser.Role == UserRole.Reviewer)
+                {
+                    if (dto.Status != DocumentStatus.WaitingApproval)
+                        return BadRequest("Reviewer can only set status to WaitingApproval.");
+                }
+
+                if (currentUser.Role == UserRole.Approver)
+                {
+                    if (dto.Status != DocumentStatus.Approved && dto.Status != DocumentStatus.ReturnedForEdit)
+                        return BadRequest("Approver can only set status to Approved or ReturnedForEdit.");
+                }
+
+                document.Status = dto.Status.Value;
+
+                if (dto.Status == DocumentStatus.Approved && currentUser.Role == UserRole.Approver)
+                {
+                    document.ApprovedByUserId = currentUser.Id;
+                }
+                else if (dto.Status != DocumentStatus.Approved)
+                {
+                    document.ApprovedByUserId = null;
+                }
             }
 
-            if (currentUser.Role == UserRole.Approver)
-            {
-                if (dto.Status != DocumentStatus.Approved && dto.Status != DocumentStatus.ReturnedForEdit)
-                    return BadRequest("Approver can only set status to Approved or ReturnedForEdit.");
-            }
-
-            document.Status = dto.Status;
-
-            if (dto.Status == DocumentStatus.Approved && currentUser.Role == UserRole.Approver)
-            {
-                document.ApprovedByUserId = currentUser.Id;
-            }
-            else if (dto.Status != DocumentStatus.Approved)
-            {
-                document.ApprovedByUserId = null;
-            }
-
-            // Komentar
+            // Komentar (obavezan je ili ako postoji status, dodajemo automatski komentar)
             string commentText;
-            if (string.IsNullOrWhiteSpace(dto.CommentContent))
+            if (!string.IsNullOrWhiteSpace(dto.CommentContent))
+            {
+                commentText = dto.CommentContent.Trim();
+            }
+            else if (dto.Status != null)
             {
                 commentText = $"Document reviewed by {currentUser.Username}, profession: {currentUser.Profession}";
             }
             else
             {
-                commentText = dto.CommentContent.Trim();
+                return BadRequest("You must provide a comment or a status update.");
             }
 
             var comment = new Comment
@@ -345,9 +350,58 @@
 
             await _context.SaveChangesAsync();
 
+            return Ok(new
+            {
+                message = dto.Status != null ? "Document status updated and comment added." : "Comment added.",
+                status = document.Status.ToString()
+            });
+        }
 
+        [HttpPost("{id}/archive")]
+        //[Authorize]
+        public async Task<IActionResult> ArchiveDocument(int id)
+        {
+            var document = await _context.Documents.FindAsync(id);
+            if (document == null)
+                return NotFound("Document not found");
 
-            return Ok(new { message = "Document status updated", status = document.Status.ToString() });
+            if (document.Status == DocumentStatus.Archived)
+                return BadRequest("Document is already archived.");
+
+            document.Status = DocumentStatus.Archived;
+            document.ArchivedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Document successfully archived." });
+        }
+
+        [HttpDelete("cleanup-archived")]
+        [Authorize(Roles = "Administrator")] // samo admin može
+        public async Task<IActionResult> DeleteArchivedDocuments()
+        {
+            var threeDaysAgo = DateTime.UtcNow.AddDays(-3);
+
+            var documentsToDelete = await _context.Documents
+                .Where(d => d.Status == DocumentStatus.Archived && d.ArchivedAt <= threeDaysAgo)
+                .ToListAsync();
+
+            foreach (var doc in documentsToDelete)
+            {
+                if (System.IO.File.Exists(doc.FilePath))
+                {
+                    System.IO.File.Delete(doc.FilePath);
+                }
+
+                _context.Documents.Remove(doc);
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = $"{documentsToDelete.Count} archived document(s) permanently deleted."
+            });
         }
 
 
