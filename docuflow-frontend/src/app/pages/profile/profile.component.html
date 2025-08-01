@@ -1,0 +1,41 @@
+<div *ngIf="user; else errorTpl" class="profile-container">
+  <div class="user-icon">
+    <i class="fa-solid fa-user-circle"></i>
+  </div>
+
+  <div class="profile-field">
+    <strong>Username:</strong>
+    <p>{{ user.username }}</p>
+    <hr />
+  </div>
+
+  <div class="profile-field">
+    <strong>First Name:</strong>
+    <p>{{ user.firstName }}</p>
+    <hr />
+  </div>
+
+  <div class="profile-field">
+    <strong>Last Name:</strong>
+    <p>{{ user.lastName }}</p>
+    <hr />
+  </div>
+
+  <div class="profile-field">
+    <strong>Profession:</strong>
+    <p>{{ user.profession }}</p>
+    <hr />
+  </div>
+
+  <div class="profile-field">
+    <strong>Role:</strong>
+    <p>{{ user.role }}</p>
+  </div>
+</div>
+
+<ng-template #errorTpl>
+  <div class="error-message">
+    <p>{{ errorMessage }}</p>
+  </div>
+</ng-template>
+

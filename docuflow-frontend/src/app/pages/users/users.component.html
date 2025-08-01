@@ -30,7 +30,7 @@
       </div>
 
       <div class="user-actions-vertical">
-        <button class="edit-btn">Edit</button>
+        <button class="edit-btn" (click)="openEditDialog(user)">Edit</button>
         <button class="delete-btn" (click)="deleteUser(user)">Delete</button>
       </div>
     </div>
@@ -43,21 +43,19 @@
       <input type="text" placeholder="Last Name" [(ngModel)]="newUser.lastName" />
       <input type="text" placeholder="Username" [(ngModel)]="newUser.username" />
       <input type="password" placeholder="Password" [(ngModel)]="newUser.password" />
-      <!-- Select za role -->
+
       <select [(ngModel)]="newUser.role">
         <option *ngFor="let role of userRoles" [value]="role">{{ role }}</option>
       </select>
 
-      <!-- Select za profession -->
       <select [(ngModel)]="selectedProfession" (change)="onProfessionChange()">
         <option *ngFor="let prof of professions" [value]="prof">{{ prof }}</option>
       </select>
 
-      <!-- Prikaži input samo ako je izabrano 'Other' -->
+      <!-- prikazi input samo ako je izabrano 'Other' -->
       <input *ngIf="selectedProfession === 'Other'" type="text" placeholder="Enter profession"
              [(ngModel)]="newUser.profession" />
 
-      <!-- Ako nije Other, automatski upiši selektovanu profesiju -->
       <input *ngIf="selectedProfession !== 'Other'" type="hidden"
              [ngModel]="selectedProfession"
              (ngModelChange)="newUser.profession = $event" />
@@ -72,6 +70,21 @@
     </div>
   </div>
 
+</div>
+<!-- Edit Role Dialog -->
+<div class="dialog-backdrop" *ngIf="showEditDialog">
+  <div class="dialog">
+    <h2>Change Role for {{ selectedUser?.username }}</h2>
+
+    <select [(ngModel)]="selectedNewRole">
+      <option *ngFor="let role of userRoles" [value]="role">{{ role }}</option>
+    </select>
+
+    <div class="dialog-actions">
+      <button class="create-btn" (click)="confirmRoleChange()">Save</button>
+      <button class="cancel-btn" (click)="closeEditDialog()">Cancel</button>
+    </div>
+  </div>
 </div>
 
 <div class="snackbar" [class.show]="showSnackbar">{{ snackbarMessage }}</div>

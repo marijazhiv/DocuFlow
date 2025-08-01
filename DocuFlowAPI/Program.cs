@@ -1,77 +1,4 @@
-﻿/*using DocuFlowAPI.Models;
-using DocuFlowAPI.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-
-var builder = WebApplication.CreateBuilder(args);*/
-
-//// Add services to the container.
-
-//builder.Services.AddControllers();
-//// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-//builder.Services.AddEndpointsApiExplorer();
-//builder.Services.AddSwaggerGen();
-
-//var app = builder.Build();
-
-//// Configure the HTTP request pipeline.
-//if (app.Environment.IsDevelopment())
-//{
-//    app.UseSwagger();
-//    app.UseSwaggerUI();
-//}
-
-//app.UseHttpsRedirection();
-
-//app.UseAuthorization();
-
-//app.MapControllers();
-
-//app.Run();
-
-//using DocuFlowAPI.Models;
-//using DocuFlowAPI.Services;
-//using Microsoft.AspNetCore.Authentication.JwtBearer;
-//using Microsoft.EntityFrameworkCore;
-//using Microsoft.IdentityModel.Tokens;
-//using System.Text;
-
-//var builder = WebApplication.CreateBuilder(args);
-
-//builder.Services.AddControllers();
-//builder.Services.AddEndpointsApiExplorer();
-//builder.Services.AddSwaggerGen();
-
-//builder.Services.AddDbContext<DataContext>(options =>
-//    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-//builder.Services.AddScoped<ITokenService, TokenService>();
-
-//builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-//    .AddJwtBearer(options =>
-//    {
-//        var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!);
-//        options.TokenValidationParameters = new TokenValidationParameters
-//        {
-//            ValidateIssuerSigningKey = true,
-//            IssuerSigningKey = new SymmetricSecurityKey(key),
-//            ValidateIssuer = false,
-//            ValidateAudience = false
-//        };
-//    });
-
-//builder.Services.AddAuthorization();
-
-//var app = builder.Build();
-//app.UseAuthentication();
-//app.UseAuthorization();
-
-//app.MapControllers();
-//app.Run();
-
-using DocuFlowAPI.Models;
+﻿using DocuFlowAPI.Models;
 using DocuFlowAPI.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -80,7 +7,8 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
-// 🔐 CORS konfiguracija (omogućava Angular frontendu pristup backendu)
+
+// CORS konfiguracija (omogućava Angular frontendu pristup backendu)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
@@ -92,12 +20,45 @@ builder.Services.AddCors(options =>
         });
 });
 
+// DbContext
+builder.Services.AddDbContext<DataContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Registracija servisa sa interfejsom
+builder.Services.AddScoped<IDocumentService, DocumentService>();
+
+// Token servis
+builder.Services.AddScoped<ITokenService, TokenService>();
+
+// JWT autentifikacija
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!);
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(key),
+            ValidateIssuer = false,
+            ValidateAudience = false
+        };
+    });
+
+// Autorizacija
+builder.Services.AddAuthorization();
+
+// Registracija background servisa za čišćenje arhiviranih dokumenata
+builder.Services.AddHostedService<ArchivedDocumentsCleanupService>();
+builder.Services.AddScoped<IUsersService, UsersService>();
+builder.Services.AddScoped<ICommentService, CommentService>();
+
+
 // Dodaj kontrolere i Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    // Dodaj definiciju za JWT Bearer autentifikaciju u Swagger
+    // JWT Bearer definicija za Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token.",
@@ -123,33 +84,9 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// DbContext
-builder.Services.AddDbContext<DataContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// Token servis
-builder.Services.AddScoped<ITokenService, TokenService>();
-
-// JWT autentifikacija
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!);
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(key),
-            ValidateIssuer = false,
-            ValidateAudience = false
-        };
-    });
-
-// Autorizacija
-builder.Services.AddAuthorization();
-
 var app = builder.Build();
 
-// ✅ AUTOMATSKA MIGRACIJA
+// AUTOMATSKA MIGRACIJA
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<DataContext>();
@@ -160,12 +97,12 @@ using (var scope = app.Services.CreateScope())
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// 🔗 Middleware redosled
+// Middleware pipeline
 app.UseHttpsRedirection();
-app.UseCors("AllowFrontend"); // <--- dodato ovde
-app.UseAuthentication();
+app.UseCors("AllowFrontend");
+app.UseAuthentication();   //mora biti pre autorizacije
 app.UseAuthorization();
 
 app.MapControllers();
-app.Run();
 
+app.Run();

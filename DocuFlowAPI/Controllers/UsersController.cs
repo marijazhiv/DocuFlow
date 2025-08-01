@@ -1,112 +1,89 @@
 ﻿using DocuFlowAPI.Models;
+using DocuFlowAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Security.Cryptography;
-using System.Text;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace DocuFlowAPI.Controllers
 {
-    [Authorize(Roles = "Administrator")]
     [ApiController]
     [Route("api/[controller]")]
     public class UsersController : ControllerBase
     {
-        private readonly DataContext _context;
+        private readonly IUsersService _usersService;
 
-        public UsersController(DataContext context)
+        public UsersController(IUsersService usersService)
         {
-            _context = context;
+            _usersService = usersService;
         }
 
-        /*[HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetAllUsers()
-        {
-            return await _context.Users.ToListAsync();
-        }*/
         [HttpGet]
+        [Authorize(Roles = "Administrator")]
         public async Task<ActionResult<IEnumerable<UserDto>>> GetAllUsers()
         {
-            var users = await _context.Users
-                .Select(u => new UserDto
-                {
-                    Id = u.Id,
-                    Username = u.Username,
-                    FirstName = u.FirstName,
-                    LastName = u.LastName,
-                    Profession = u.Profession,
-                    Role = u.Role.ToString()
-                })
-                .ToListAsync();
-
+            var users = await _usersService.GetAllUsersAsync();
             return Ok(users);
         }
 
         [HttpPost("create")]
+        [Authorize(Roles = "Administrator")]
         public async Task<ActionResult> CreateUser(RegisterDto dto)
         {
-            if (await _context.Users.AnyAsync(u => u.Username == dto.Username))
-                return BadRequest(new { error = "Username already exists." });
+            var (success, message) = await _usersService.CreateUserAsync(dto);
+            if (!success) return BadRequest(new { error = message });
 
-            if (!Enum.TryParse<UserRole>(dto.Role, true, out var parsedRole))
-                return BadRequest(new { error = "Invalid role." });
-
-            using var hmac = new HMACSHA512();
-            var user = new User
-            {
-                Username = dto.Username,
-                PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(dto.Password)),
-                PasswordSalt = hmac.Key,
-                Role = parsedRole,
-                Profession = dto.Profession,
-                FirstName = dto.FirstName,
-                LastName = dto.LastName
-            };
-
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "User created." });
+            return Ok(new { message });
         }
-
-
-        // ChangeUserRole endpoint:
 
         [HttpPut("{id}/role")]
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> ChangeUserRole(int id, [FromBody] string role)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null) return NotFound();
+            var (success, message) = await _usersService.ChangeUserRoleAsync(id, role);
+            if (!success) return BadRequest(message);
 
-            if (!Enum.TryParse<UserRole>(role, true, out var parsedRole))
-                return BadRequest("Invalid role.");
-
-            user.Role = parsedRole;
-            await _context.SaveChangesAsync();
-
-            return Ok("Role updated.");
+            return Ok(message);
         }
 
-        //za dbijanje liste rola na frontu
-
         [HttpGet("roles")]
-        public ActionResult<IEnumerable<string>> GetRoles()
+        [Authorize(Roles = "Administrator")]
+        public async Task<ActionResult<IEnumerable<string>>> GetRoles()
         {
-            var roles = Enum.GetNames(typeof(UserRole));
+            var roles = await _usersService.GetRolesAsync();
             return Ok(roles);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<User>> GetUser(int id)
+        [Authorize]
+        public async Task<ActionResult<UserDto>> GetUser(int id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _usersService.GetUserByIdAsync(id);
             if (user == null)
                 return NotFound(new { error = "User not found." });
 
             return Ok(user);
         }
 
+        [HttpGet("username/{username}")]
+        [Authorize]
+        public async Task<ActionResult<UserDto>> GetUserByUsername(string username)
+        {
+            var user = await _usersService.GetUserByUsernameAsync(username);
+            if (user == null)
+                return NotFound(new { error = "User not found." });
 
+            return Ok(user);
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Administrator")]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            var (success, message) = await _usersService.DeleteUserAsync(id);
+            if (!success) return NotFound(new { error = message });
+
+            return Ok(new { message });
+        }
     }
-
 }

@@ -45,6 +45,17 @@ export class DocumentsComponent {
     4: 'Archived'
   };
 
+  snackbarMessage: string = '';
+  showSnackbar: boolean = false;
+
+  showSuccessSnackbar(message: string) {
+    this.snackbarMessage = message;
+    this.showSnackbar = true;
+
+    setTimeout(() => {
+      this.showSnackbar = false;
+    }, 3000);
+  }
   ngOnInit() {
     this.loadDocuments();
   }
@@ -178,18 +189,18 @@ export class DocumentsComponent {
 
     this.documentsService.uploadDocument(formData).subscribe({
       next: (response) => {
-        alert('Upload successful! Version: ' + response.version);
+        //alert('Upload successful! Version: ' + response.version);
+        this.showSuccessSnackbar('Upload successful! Version: ' + response.version);
         this.closeUploadDialog();
         this.loadDocuments();
       },
       error: (err) => {
         console.error('Upload failed', err);
-        alert('Upload failed.');
+        //alert('Upload failed.');
+        this.showSuccessSnackbar('Upload failed.');
       }
     });
   }
-
-  // ********** OVDE DODAJEMO KOD ZA PRIKAZ PDF MODALA **********
 
   showDocumentDialog = false;
   dialogFileUrl: SafeResourceUrl | null = null;
@@ -250,7 +261,7 @@ export class DocumentsComponent {
 
   openCommentInputDialog(documentId: number) {
     this.commentTargetDocumentId = documentId;
-    this.selectedDocumentId = documentId; // opcionalno, ako koristiš selectedDocumentId u drugim delovima
+    this.selectedDocumentId = documentId;
     this.newCommentText = '';
     this.newCommentStatus = '';
     this.showCommentInputDialog = true;
@@ -281,7 +292,8 @@ export class DocumentsComponent {
 
   updateStatusAndComment(documentId: number, commentContent: string, status?: string) {
     if (!commentContent?.trim() && !status) {
-      alert('You must provide a comment or select a status.');
+      //alert('You must provide a comment or select a status.');
+      this.showSuccessSnackbar('You must provide a comment or select a status!');
       return;
     }
 
@@ -292,7 +304,8 @@ export class DocumentsComponent {
     if (status) {
       const statusNum = this.statusStringToNumberMap[status];
       if (statusNum === undefined) {
-        alert('Invalid status selected.');
+        //alert('Invalid status selected.');
+        this.showSuccessSnackbar('Invalid status selected.');
         return;
       }
       dto.status = statusNum;
@@ -300,16 +313,50 @@ export class DocumentsComponent {
 
     this.documentsService.updateDocumentStatus(documentId, dto).subscribe({
       next: (res) => {
-        alert('Successfully updated comment and/or status.');
+        //alert('Successfully updated comment and/or status.');
+        this.showSuccessSnackbar('Successfully updated comment and/or status.');
         this.closeComments();
         this.loadDocuments();
       },
       error: (err) => {
         console.error('Error updating status/comment:', err);
-        alert('Failed to update status or add comment.');
+        //alert('Failed to update status or add comment.');
+        this.showSuccessSnackbar('Failed to update status or add comment.');
       }
     });
   }
+
+  downloadDocument(file: DocumentFile) {
+    const token = this.authService.getToken();
+    if (!token) {
+      console.error('No JWT token found!');
+      return;
+    }
+
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${token}`
+    });
+
+    this.http.get(`https://localhost:7053/api/Documents/${file.id}/stream`, {
+      headers,
+      responseType: 'blob'
+    }).subscribe({
+      next: (blob) => {
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = file.name;  // npr. "myfile.pdf"
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl); // oslobodi memoriju
+      },
+      error: (err) => {
+        console.error('Error downloading file:', err);
+      }
+    });
+  }
+
 
 
 }

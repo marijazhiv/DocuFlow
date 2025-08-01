@@ -260,3 +260,27 @@
 .social-icons i.fa-brands:hover {
   color: #5c6bc0; /* efekat hover, možeš izmeniti */
 }
+
+.snackbar {
+  visibility: hidden;
+  min-width: 250px;
+  background-color: #323232;
+  color: #fff;
+  text-align: center;
+  border-radius: 8px;
+  padding: 14px 24px;
+  position: fixed;
+  left: 50%;
+  bottom: 30px;
+  transform: translateX(-50%);
+  z-index: 999;
+  font-size: 16px;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out, bottom 0.3s ease-in-out;
+}
+
+.snackbar.show {
+  visibility: visible;
+  opacity: 1;
+  bottom: 50px;
+}

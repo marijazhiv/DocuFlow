@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DocuFlowAPI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5581102fe86ee9aa715a8ac228db04baf4a7ee01")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a148807036063a8f5930d77638957476ade9790a")]
 [assembly: System.Reflection.AssemblyProductAttribute("DocuFlowAPI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DocuFlowAPI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

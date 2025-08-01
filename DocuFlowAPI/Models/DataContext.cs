@@ -2,10 +2,13 @@
 
 namespace DocuFlowAPI.Models
 {
+    //kontekst baze podataka (EF Core)
     public class DataContext : DbContext
     {
-        public DataContext(DbContextOptions<DataContext> options) : base(options) { }
+        public DataContext(DbContextOptions<DataContext> options) : base(options) { }      //DbContextOptions - sadrzi db konfiguraciju
 
+
+        //// DbSet predstavlja tabelu u bazi podataka za entitet User
         public DbSet<User> Users { get; set; } = null!;
         public DbSet<Document> Documents => Set<Document>();
 

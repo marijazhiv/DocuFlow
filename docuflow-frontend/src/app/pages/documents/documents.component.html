@@ -3,8 +3,6 @@
 
     <!-- Filter bar -->
     <div class="main-content">
-
-      <!-- Filter bar -->
       <div class="documents-filter-bar">
         <input
           type="text"
@@ -81,6 +79,11 @@
           <button class="status-btn" data-tooltip="Overview" (click)="openDocumentDialog(file)">
             <i class="fa-solid fa-file-alt"></i>
           </button>
+
+          <button class="download-btn" data-tooltip="Download" (click)="downloadDocument(file)">
+            <i class="fa-solid fa-download"></i>
+          </button>
+
 
           <button class="comment-btn" data-tooltip="Comment" (click)="openCommentInputDialog(file.id)">
             <i class="fa-solid fa-comment"></i>
@@ -177,3 +180,4 @@
   </div>
 </div>
 
+<div class="snackbar" [class.show]="showSnackbar">{{ snackbarMessage }}</div>

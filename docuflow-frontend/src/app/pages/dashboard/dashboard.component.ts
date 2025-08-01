@@ -49,6 +49,17 @@ export class DashboardComponent {
         4: 'Archived'
     };
 
+  snackbarMessage: string = '';
+  showSnackbar: boolean = false;
+
+  showSuccessSnackbar(message: string) {
+    this.snackbarMessage = message;
+    this.showSnackbar = true;
+
+    setTimeout(() => {
+      this.showSnackbar = false;
+    }, 3000); // automatski nestane posle 3 sekunde
+  }
     ngOnInit() {
         this.loadDocuments();
     }
@@ -156,7 +167,8 @@ export class DashboardComponent {
         if (confirm(`Are you sure you want to archive "${file.name}"?`)) {
             this.documentsService.archiveDocument(file.id).subscribe({
                 next: () => {
-                    alert('Document archived successfully.');
+                    //alert('Document archived successfully.');
+                  this.showSuccessSnackbar('Document archived successfully.');
                     this.loadDocuments();
                 },
                 error: (err) => {

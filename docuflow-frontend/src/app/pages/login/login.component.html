@@ -20,8 +20,18 @@
           <option value="" disabled selected>Select Profession</option>
           <option value="Software Engineer">Software Engineer</option>
           <option value="Team Leader">Team Leader</option>
-          <option value="QA Tester">QA Tester</option>
+          <option value="QA Engineer">QA Engineer</option>
+          <option value="Senior Engineer">Senior Engineer</option>
+          <option value="Tech Lead">Tech Lead</option>
+          <option value="Tech Lead">Tech Lead</option>
+          <option value="Project Manager">Project Manager</option>
+          <option value="HR Lead">HR Lead</option>
+          <option value="UX/UI Designer">UX/UI Designer</option>
+          <option value="DevOps Engineer">DevOps Engineer</option>
+          <option value="DevOps Engineer">DevOps Engineer</option>
+          <option value="Business Analyst">Business Analyst</option>
           <option value="Other">Other</option>
+
         </select>
 
         <!-- Polje za unos ako je Other -->
@@ -81,3 +91,5 @@
     </div>
   </div>
 </div>
+
+<div class="snackbar" [class.show]="showSnackbar">{{ snackbarMessage }}</div>

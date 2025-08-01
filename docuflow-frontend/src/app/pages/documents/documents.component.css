@@ -66,9 +66,6 @@
   opacity: 0.9;
 }
 
-
-
-/* Glavni sadržaj */
 .main-content {
   flex: 1;
   padding: 30px;
@@ -78,13 +75,11 @@
 
 }
 
-/* Kada je sidebar zatvoren, sadržaj se pomera ulevo */
 .dashboard-container.sidebar-collapsed .main-content {
   margin-left: 0;
 }
 
 
-/* Ostali stilovi */
 .content-area {
   background-color: #fff;
   padding: 40px;
@@ -190,6 +185,12 @@
   color: #616161;
 }
 
+.file-card .status.returnedforedit {
+  background-color: #ffe6cc;
+  color: #a66300;
+}
+
+
 /* Dugmad unutar kartice */
 .file-card button {
   background: linear-gradient(90deg, #5c6bc0 0%, #000000 100%);
@@ -230,14 +231,13 @@
   font-size: 18px;
   transition: background-color 0.3s ease;
   padding: 0;
-  position: relative; /* POTREBNO za tooltip pozicioniranje */
+  position: relative;
 }
 
-/* Tooltip tekst (sakriven dok se ne hoveruje) */
 .file-card-actions button::after {
-  content: attr(data-tooltip); /* uzima tekst iz atributa data-tooltip */
+  content: attr(data-tooltip);
   position: absolute;
-  bottom: 125%; /* iznad dugmeta */
+  bottom: 125%;
   left: 50%;
   transform: translateX(-50%);
   background-color: #5c6bc0;
@@ -287,9 +287,8 @@
   background: #3949ab;
 }
 
-/* Ikone unutar dugmadi - mali razmak ako dodaš tekst */
 .file-card-actions button i {
-  pointer-events: none; /* da klik ne ide na ikoncu nego na dugme */
+  pointer-events: none;
 }
 .dialog-backdrop {
   position: fixed;
@@ -297,11 +296,11 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.4); /* tamno poluprovidno zamagljenje */
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000; /* da je iznad svega */
+  z-index: 1000;
 }
 
 .dialog {
@@ -329,7 +328,6 @@
   resize: vertical;
 }
 
-/* Dugmad u dijalogu */
 .dialog-actions {
   display: flex;
   justify-content: flex-end;
@@ -417,8 +415,8 @@
   position: fixed;
   top: 50%;
   left: 50%;
-  width: 90vw;        /* Širi modal */
-  height: 90vh;       /* Viši modal */
+  width: 90vw;
+  height: 90vh;
   transform: translate(-50%, -50%);
   background: white;
   padding: 0.5rem;
@@ -441,7 +439,7 @@
 
 .pdf-container,
 .docx-container {
-  flex-grow: 1;       /* Popuni sav prostor koji ostane */
+  flex-grow: 1;
   display: flex;
 }
 
@@ -452,7 +450,6 @@
   border: none;
 }
 
-/* Modal backdrop - već postoji, ali za svaki slučaj */
 .modal-backdrop {
   position: fixed;
   top: 0;
@@ -463,23 +460,23 @@
   z-index: 1000;
 }
 .file-card .status.draft {
-    background-color: #fff8e1; /* svetložuta za koncept/skicu */
-    color: #f9a825;            /* tamnožuta – privlači pažnju */
+    background-color: #fff8e1;
+    color: #f9a825;
 }
 
 .file-card .status.waitingapproval {
-    background-color: #e3f2fd; /* svetloplava za čekanje */
-    color: #1565c0;            /* tamnoplava – signalizira čekanje na odluku */
+    background-color: #e3f2fd;
+    color: #1565c0;
 }
 
 .file-card .status.approved {
-    background-color: #c8e6c9; /* svetlozelena */
-    color: #2e7d32;            /* tamnozelena – signalizira uspeh */
+    background-color: #c8e6c9;
+    color: #2e7d32;
 }
 
 .file-card .status.archived {
-    background-color: #e0e0e0; /* neutralno siva */
-    color: #616161;            /* tamnosiva – signalizira arhivu/neaktivno */
+    background-color: #e0e0e0;
+    color: #616161;
 }
 
 
@@ -505,7 +502,6 @@
   margin-bottom: 15px;
 }
 
-/* Close dugme u gornjem desnom uglu */
 .comments-dialog .close-btn {
   position: absolute;
   top: 12px;
@@ -555,6 +551,28 @@
 .comments-dialog button:hover {
   background-color: #303f9f;
 }
+.snackbar {
+  visibility: hidden;
+  min-width: 250px;
+  background-color: #323232;
+  color: #fff;
+  text-align: center;
+  border-radius: 8px;
+  padding: 14px 24px;
+  position: fixed;
+  left: 50%;
+  bottom: 30px;
+  transform: translateX(-50%);
+  z-index: 999;
+  font-size: 16px;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out, bottom 0.3s ease-in-out;
+}
 
+.snackbar.show {
+  visibility: visible;
+  opacity: 1;
+  bottom: 50px;
+}
 
 

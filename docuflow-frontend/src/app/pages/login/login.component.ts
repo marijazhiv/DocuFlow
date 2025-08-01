@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common'; // dodaj ovo
+import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import {Router} from "@angular/router";
 
@@ -9,7 +9,7 @@ import {Router} from "@angular/router";
   standalone: true,
   imports: [
     FormsModule,
-    CommonModule // neophodno za *ngIf, *ngClass i ostalo
+    CommonModule
   ],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
@@ -31,6 +31,18 @@ export class LoginComponent {
     profession: ''
   };
 
+  snackbarMessage: string = '';
+  showSnackbar: boolean = false;
+
+  showSuccessSnackbar(message: string) {
+    this.snackbarMessage = message;
+    this.showSnackbar = true;
+
+    setTimeout(() => {
+      this.showSnackbar = false;
+    }, 3000);
+  }
+
   constructor(private authService: AuthService, private router: Router) {}
 
   onLogin() {
@@ -42,16 +54,20 @@ export class LoginComponent {
 
     this.authService.login(loginData).subscribe({
       next: (token) => {
-        console.log('JWT token:', token);  // 👉 ispis tokena u konzoli
+        console.log('JWT token:', token);
         this.authService.saveToken(token);
-        alert('Login successful!');
-        this.router.navigate(['/dashboard']);
+
+        this.showSuccessSnackbar('Login successful!');
+        setTimeout(() => {
+          this.router.navigate(['/dashboard']);
+        }, 1500);
       },
       error: (err) => {
         alert('Login failed: ' + err.error);
       }
     });
   }
+
 
   selectedProfession: string = '';
 
@@ -65,12 +81,14 @@ export class LoginComponent {
   }
 
   onRegister() {
+    if (!this.validateRegistrationInput()) return;
+
     this.authService.register(this.signUpObj).subscribe({
       next: (res: any) => {
         if (res && res.message) {
           alert(res.message);
         } else {
-          alert('Registration successful!');
+          this.showSuccessSnackbar('Registration successful!');
         }
         this.isSignDivVisiable = false;
       },
@@ -87,18 +105,37 @@ export class LoginComponent {
       }
     });
   }
+  validateRegistrationInput(): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(this.signUpObj.username)) {
+      this.showSuccessSnackbar('Username must be a valid email address.');
+      return false;
+    }
+
+    if (this.signUpObj.password.length < 8) {
+      this.showSuccessSnackbar('Password must be at least 8 characters long.');
+      return false;
+    }
+
+    if (!this.signUpObj.firstName || !this.signUpObj.lastName) {
+      this.showSuccessSnackbar('Please fill in your first and last name.');
+      return false;
+    }
+
+    if (!this.signUpObj.role) {
+      this.showSuccessSnackbar('Please select a role.');
+      return false;
+    }
+
+    if (!this.signUpObj.profession) {
+      this.showSuccessSnackbar('Please select or enter a profession.');
+      return false;
+    }
+
+    return true;
+  }
 
 
-
-  /*this.authService.register(registerData).subscribe({
-      next: () => {
-        alert('Registration successful!');
-        this.isSignDivVisiable = false;
-      },
-      error: (err) => {
-        alert('Registration failed: ' + err.error);
-      }
-    });
-  }*/
 }
 

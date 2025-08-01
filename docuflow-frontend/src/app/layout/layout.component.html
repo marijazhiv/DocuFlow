@@ -5,12 +5,17 @@
     </div>
     <ul class="nav-links">
       <li (click)="router.navigate(['/dashboard'])"><i class="fa-solid fa-gauge"></i> Dashboard</li>
-      <li routerLink="/profile"><i class="fa-solid fa-user"></i> Profile</li>
+
+      <li (click)="router.navigate(['/profile'])"><i class="fa-solid fa-user"></i> Profile</li>
+
 
       <li (click)="router.navigate(['/documents'])"><i class="fa-solid fa-folder"></i> Documents</li>
       <li routerLink="/notifications"><i class="fa-solid fa-bell"></i> Notifications</li>
       <li routerLink="/todo"><i class="fa-solid fa-list-check"></i> To Do</li>
-      <li (click)="router.navigate(['/users'])"><i class="fa-solid fa-users"></i> Users</li>
+      <li *ngIf="isAdmin" (click)="router.navigate(['/users'])">
+        <i class="fa-solid fa-users"></i> Users
+      </li>
+
 
 
       <li (click)="logout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</li>

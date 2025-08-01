@@ -1,78 +1,42 @@
-﻿namespace DocuFlowAPI.Controllers
-{
-    using Microsoft.AspNetCore.Authorization;
-    using Microsoft.AspNetCore.Mvc;
-    using Microsoft.EntityFrameworkCore;
-    using DocuFlowAPI.Models;
-    using System.IO;
-    using System.Linq;
-    using System.Threading.Tasks;
+﻿using DocuFlowAPI.Models;
+using DocuFlowAPI.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Threading.Tasks;
 
+namespace DocuFlowAPI.Controllers
+{
     [ApiController]
     [Route("api/[controller]")]
     public class DocumentsController : ControllerBase
     {
+        private readonly IDocumentService _documentService;
         private readonly DataContext _context;
-        private readonly IWebHostEnvironment _env;
 
-        public DocumentsController(DataContext context, IWebHostEnvironment env)
+        // Kknstruktor prima IDocumentService, ne konkretnu klasu DocumentService
+        public DocumentsController(IDocumentService documentService, DataContext context)
         {
+            _documentService = documentService;
             _context = context;
-            _env = env;
         }
 
         [HttpPost("upload")]
         [Authorize]
         public async Task<IActionResult> Upload([FromForm] DocumentUploadDTO dto)
         {
-            if (dto.File == null || dto.File.Length == 0)
-                return BadRequest("File is required");
+            var userName = User.Identity?.Name ?? "";
+            var result = await _documentService.UploadDocumentAsync(dto, userName);
 
-            var uploadsFolder = Path.Combine(_env.ContentRootPath, "UploadedDocs");
-            Directory.CreateDirectory(uploadsFolder);
-
-            var originalFileName = Path.GetFileNameWithoutExtension(dto.File.FileName);
-            var extension = Path.GetExtension(dto.File.FileName);
-            var documentType = extension.TrimStart('.').ToLower();
-
-            var existingVersions = _context.Documents
-                .Where(d => d.Project == dto.Project && d.FileName == dto.File.FileName)
-                .Count();
-
-            var version = existingVersions + 1;
-            var savedFileName = $"{originalFileName}_v{version}{extension}";
-            var savedPath = Path.Combine(uploadsFolder, savedFileName);
-
-            using (var stream = new FileStream(savedPath, FileMode.Create))
-            {
-                await dto.File.CopyToAsync(stream);
-            }
-
-            var userName = User.Identity!.Name!;
-
-            var document = new Document
-            {
-                FileName = dto.File.FileName,
-                FilePath = savedPath,
-                Project = dto.Project,
-                Description = dto.Description,
-                Version = version,
-                UploadedBy = userName,
-                UploadedAt = DateTime.UtcNow,
-                DocumentType = documentType,
-                Status = DocumentStatus.Draft,
-                ApprovedByUserId = null
-            };
-
-
-            _context.Documents.Add(document);
-            await _context.SaveChangesAsync();
+            if (!result.Success)
+                return BadRequest(result.Message);
 
             return Ok(new
             {
-                message = "Document uploaded successfully",
-                version = version,
-                documentId = document.Id
+                message = result.Message,
+                version = result.Version,
+                documentId = result.DocumentId
             });
         }
 
@@ -80,188 +44,52 @@
         [Authorize]
         public async Task<IActionResult> GetAllDocuments([FromQuery] string? project)
         {
-            var query = _context.Documents.AsQueryable();
-
-            if (!string.IsNullOrEmpty(project))
-            {
-                query = query.Where(d => d.Project.ToLower() == project.ToLower());
-            }
-
-            var documents = await query
-                .OrderByDescending(d => d.UploadedAt)
-                .Select(d => new
-                {
-                    d.Id,
-                    d.FileName,
-                    d.Project,
-                    d.Description,
-                    d.Version,
-                    d.UploadedBy,
-                    d.UploadedAt,
-                    d.DocumentType,
-                    d.Status
-                })
-                .ToListAsync();
-
+            var documents = await _documentService.GetAllDocumentsAsync(project);
             return Ok(documents);
         }
 
         [HttpGet("search")]
         [Authorize]
         public async Task<IActionResult> SearchDocuments(
-    [FromQuery] string query,
-    [FromQuery] string sortBy = "date",  // ← dodato
-    [FromQuery] string order = "desc")   // ← dodato
+            [FromQuery] string query,
+            [FromQuery] string sortBy = "date",
+            [FromQuery] string order = "desc")
         {
             if (string.IsNullOrWhiteSpace(query))
                 return BadRequest("Query parameter is required");
 
-            var lowerQuery = query.ToLower();
-
-            var searchResults = _context.Documents
-                .Where(d =>
-                    d.FileName.ToLower().Contains(lowerQuery) ||
-                    (d.Description != null && d.Description.ToLower().Contains(lowerQuery)));
-
-            // SORTIRANJE
-            searchResults = sortBy.ToLower() switch
-            {
-                "name" => order.ToLower() == "asc"
-                    ? searchResults.OrderBy(d => d.FileName)
-                    : searchResults.OrderByDescending(d => d.FileName),
-                _ => order.ToLower() == "asc"
-                    ? searchResults.OrderBy(d => d.UploadedAt)
-                    : searchResults.OrderByDescending(d => d.UploadedAt)
-            };
-
-            var results = await searchResults
-                .Select(d => new
-                {
-                    d.Id,
-                    d.FileName,
-                    d.Project,
-                    d.Description,
-                    d.Version,
-                    d.UploadedBy,
-                    d.UploadedAt,
-                    d.DocumentType,
-                    d.Status
-                })
-                .ToListAsync();
-
+            var results = await _documentService.SearchDocumentsAsync(query, sortBy, order);
             return Ok(results);
         }
-
 
         [HttpGet("search/advanced")]
         [Authorize]
         public async Task<IActionResult> SearchAdvanced(
-    [FromQuery] string? documentType,
-    [FromQuery] string? status,
-    [FromQuery] DateTime? fromDate,
-    [FromQuery] DateTime? toDate,
-    [FromQuery] string sortBy = "date",     // ← dodato
-    [FromQuery] string order = "desc")      // ← dodato
+            [FromQuery] string? documentType,
+            [FromQuery] string? status,
+            [FromQuery] DateTime? fromDate,
+            [FromQuery] DateTime? toDate,
+            [FromQuery] string sortBy = "date",
+            [FromQuery] string order = "desc")
         {
-            var query = _context.Documents.AsQueryable();
-
-            if (!string.IsNullOrEmpty(documentType))
+            try
             {
-                query = query.Where(d => d.DocumentType.ToLower() == documentType.ToLower());
+                var results = await _documentService.SearchAdvancedAsync(documentType, status, fromDate, toDate, sortBy, order);
+                return Ok(results);
             }
-
-            if (!string.IsNullOrEmpty(status))
+            catch (ArgumentException ex)
             {
-                if (Enum.TryParse<DocumentStatus>(status, true, out var statusEnum))
-                {
-                    query = query.Where(d => d.Status == statusEnum);
-                }
-                else
-                {
-                    return BadRequest("Invalid status value");
-                }
+                return BadRequest(ex.Message);
             }
-
-            if (fromDate.HasValue)
-            {
-                query = query.Where(d => d.UploadedAt >= fromDate.Value.ToUniversalTime());
-            }
-
-            if (toDate.HasValue)
-            {
-                query = query.Where(d => d.UploadedAt <= toDate.Value.ToUniversalTime());
-            }
-
-            // SORTIRANJE
-            query = sortBy.ToLower() switch
-            {
-                "name" => order.ToLower() == "asc"
-                    ? query.OrderBy(d => d.FileName)
-                    : query.OrderByDescending(d => d.FileName),
-                _ => order.ToLower() == "asc"
-                    ? query.OrderBy(d => d.UploadedAt)
-                    : query.OrderByDescending(d => d.UploadedAt)
-            };
-
-            var results = await query
-                .Select(d => new
-                {
-                    d.Id,
-                    d.FileName,
-                    d.Project,
-                    d.Description,
-                    d.Version,
-                    d.UploadedBy,
-                    d.UploadedAt,
-                    d.DocumentType,
-                    d.Status
-                })
-                .ToListAsync();
-
-            return Ok(results);
         }
 
-        // 🔽 Sortiranje po datumu ili nazivu
         [HttpGet("sort")]
         [Authorize]
         public async Task<IActionResult> SortDocuments(
-            [FromQuery] string sortBy = "date",  // "date" ili "name"
-            [FromQuery] string order = "desc"    // "asc" ili "desc"
-        )
+            [FromQuery] string sortBy = "date",
+            [FromQuery] string order = "desc")
         {
-            var query = _context.Documents.AsQueryable();
-
-            switch (sortBy.ToLower())
-            {
-                case "name":
-                    query = order.ToLower() == "asc"
-                        ? query.OrderBy(d => d.FileName)
-                        : query.OrderByDescending(d => d.FileName);
-                    break;
-
-                case "date":
-                default:
-                    query = order.ToLower() == "asc"
-                        ? query.OrderBy(d => d.UploadedAt)
-                        : query.OrderByDescending(d => d.UploadedAt);
-                    break;
-            }
-
-            var results = await query
-                .Select(d => new
-                {
-                    d.Id,
-                    d.FileName,
-                    d.Project,
-                    d.Description,
-                    d.Version,
-                    d.UploadedBy,
-                    d.UploadedAt,
-                    d.DocumentType,
-                    d.Status
-                })
-                .ToListAsync();
-
+            var results = await _documentService.SortDocumentsAsync(sortBy, order);
             return Ok(results);
         }
 
@@ -269,22 +97,17 @@
         [Authorize]
         public async Task<IActionResult> StreamDocument(int id)
         {
-            var document = await _context.Documents.FindAsync(id);
-            if (document == null || !System.IO.File.Exists(document.FilePath))
-                return NotFound("Document not found");
+            var (success, message, stream) = await _documentService.StreamDocumentAsync(id);
+            if (!success)
+                return NotFound(message);
 
-            var stream = new FileStream(document.FilePath, FileMode.Open, FileAccess.Read);
-            return File(stream, "application/pdf");
+            return File(stream!, "application/pdf");
         }
 
         [HttpPut("{id}/status")]
         [Authorize]
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateDocumentStatusDto dto)
         {
-            var document = await _context.Documents.Include(d => d.Comments).FirstOrDefaultAsync(d => d.Id == id);
-            if (document == null)
-                return NotFound();
-
             var userName = User.Identity?.Name;
             if (string.IsNullOrEmpty(userName))
                 return Unauthorized();
@@ -293,119 +116,38 @@
             if (currentUser == null)
                 return Unauthorized();
 
-            // Ako je prosleđen status, vršimo provere i ažuriranje
-            if (dto.Status != null)
+            var (success, message, updatedDocument) = await _documentService.UpdateStatusAsync(id, dto, currentUser);
+
+            if (!success)
             {
-                if (currentUser.Role == UserRole.Author)
-                    return Forbid("Authors cannot change document status.");
-
-                if (currentUser.Role == UserRole.Reviewer)
-                {
-                    if (dto.Status != DocumentStatus.WaitingApproval)
-                        return BadRequest("Reviewer can only set status to WaitingApproval.");
-                }
-
-                if (currentUser.Role == UserRole.Approver)
-                {
-                    if (dto.Status != DocumentStatus.Approved && dto.Status != DocumentStatus.ReturnedForEdit)
-                        return BadRequest("Approver can only set status to Approved or ReturnedForEdit.");
-                }
-
-                document.Status = dto.Status.Value;
-
-                if (dto.Status == DocumentStatus.Approved && currentUser.Role == UserRole.Approver)
-                {
-                    document.ApprovedByUserId = currentUser.Id;
-                }
-                else if (dto.Status != DocumentStatus.Approved)
-                {
-                    document.ApprovedByUserId = null;
-                }
+                if (message.Contains("forbid", StringComparison.OrdinalIgnoreCase))
+                    return Forbid(message);
+                return BadRequest(message);
             }
 
-            // Komentar (obavezan je ili ako postoji status, dodajemo automatski komentar)
-            string commentText;
-            if (!string.IsNullOrWhiteSpace(dto.CommentContent))
-            {
-                commentText = dto.CommentContent.Trim();
-            }
-            else if (dto.Status != null)
-            {
-                commentText = $"Document reviewed by {currentUser.Username}, profession: {currentUser.Profession}";
-            }
-            else
-            {
-                return BadRequest("You must provide a comment or a status update.");
-            }
-
-            var comment = new Comment
-            {
-                DocumentId = document.Id,
-                UserId = currentUser.Id,
-                Content = commentText,
-                CreatedAt = DateTime.UtcNow
-            };
-            document.Comments.Add(comment);
-            _context.Comments.Add(comment);
-
-            await _context.SaveChangesAsync();
-
-            return Ok(new
-            {
-                message = dto.Status != null ? "Document status updated and comment added." : "Comment added.",
-                status = document.Status.ToString()
-            });
+            return Ok(new { message, status = updatedDocument!.Status.ToString() });
         }
 
         [HttpPost("{id}/archive")]
         //[Authorize]
         public async Task<IActionResult> ArchiveDocument(int id)
         {
-            var document = await _context.Documents.FindAsync(id);
-            if (document == null)
-                return NotFound("Document not found");
+            var (success, message) = await _documentService.ArchiveDocumentAsync(id);
+            if (!success)
+                return BadRequest(message);
 
-            if (document.Status == DocumentStatus.Archived)
-                return BadRequest("Document is already archived.");
-
-            document.Status = DocumentStatus.Archived;
-            document.ArchivedAt = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Document successfully archived." });
+            return Ok(new { message });
         }
 
         [HttpDelete("cleanup-archived")]
-        [Authorize(Roles = "Administrator")] // samo admin može
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> DeleteArchivedDocuments()
         {
-            var threeDaysAgo = DateTime.UtcNow.AddDays(-3);
+            var (success, message, count) = await _documentService.DeleteArchivedDocumentsAsync();
+            if (!success)
+                return BadRequest(message);
 
-            var documentsToDelete = await _context.Documents
-                .Where(d => d.Status == DocumentStatus.Archived && d.ArchivedAt <= threeDaysAgo)
-                .ToListAsync();
-
-            foreach (var doc in documentsToDelete)
-            {
-                if (System.IO.File.Exists(doc.FilePath))
-                {
-                    System.IO.File.Delete(doc.FilePath);
-                }
-
-                _context.Documents.Remove(doc);
-            }
-
-            await _context.SaveChangesAsync();
-
-            return Ok(new
-            {
-                message = $"{documentsToDelete.Count} archived document(s) permanently deleted."
-            });
+            return Ok(new { message });
         }
-
-
-
     }
 }
-

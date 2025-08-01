@@ -14,6 +14,7 @@ import {LayoutComponent} from "./layout/layout.component";
 import {DashboardComponent} from "./pages/dashboard/dashboard.component";
 import {UsersComponent} from "./pages/users/users.component";
 import {DocumentsComponent} from "./pages/documents/documents.component";
+import {ProfileComponent} from "./pages/profile/profile.component";
 
 export const routes: Routes = [
   {
@@ -30,7 +31,7 @@ export const routes: Routes = [
     component: LayoutComponent,
     children: [
       { path: 'dashboard', component: DashboardComponent },
-      //{ path: 'profile', component: ProfileComponent },
+    { path: 'profile', component: ProfileComponent },
        { path: 'documents', component: DocumentsComponent },
       //{ path: 'notifications', component: NotificationsComponent },
       //{ path: 'todo', component: TodoComponent },

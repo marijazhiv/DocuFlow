@@ -7,6 +7,8 @@ using System.Text;
 
 namespace DocuFlowAPI.Controllers
 {
+
+    //// def rutu za ovaj kontroler: api/Auth
     [ApiController]
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
@@ -29,6 +31,7 @@ namespace DocuFlowAPI.Controllers
             if (!Enum.TryParse<UserRole>(request.Role, true, out var parsedRole))
                 return BadRequest("Invalid role.");
 
+            // Kreira hash i salt za lozinku
             CreatePasswordHash(request.Password, out byte[] hash, out byte[] salt);
 
             var user = new User
@@ -64,9 +67,10 @@ namespace DocuFlowAPI.Controllers
             return Ok(token);
         }
 
+        //metoda za kreiranje hash-a i salt-a od lozinke
         private void CreatePasswordHash(string password, out byte[] hash, out byte[] salt)
         {
-            using var hmac = new HMACSHA512();
+            using var hmac = new HMACSHA512();  //autom gen. salt
             salt = hmac.Key;
             hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
         }

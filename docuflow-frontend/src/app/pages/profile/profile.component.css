@@ -1,0 +1,54 @@
+.profile-container {
+  background-color: #fff;
+  padding: 40px;
+  border-radius: 20px;
+  max-width: 600px;
+  margin: 40px auto;
+  font-family: 'Montserrat', sans-serif;
+  color: #333;
+  text-align: left;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.user-icon {
+  text-align: center;
+  font-size: 70px;
+  color: #5c6bc0;
+  margin-bottom: 30px;
+}
+
+.profile-field {
+  margin-bottom: 20px;
+}
+
+.profile-field strong {
+  display: block;
+  font-weight: 600;
+  color: #5c6bc0;
+  margin-bottom: 5px;
+}
+
+.profile-field p {
+  margin: 0;
+  font-size: 16px;
+}
+
+.profile-field hr {
+  width: 50%;
+  margin: 12px 0;
+  border: none;
+  border-top: 1px solid #ccc;
+}
+
+.error-message {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 20px;
+  background-color: #ffcdd2;
+  color: #b71c1c;
+  border-radius: 20px;
+  font-weight: 600;
+  text-align: center;
+  font-family: 'Montserrat', sans-serif;
+}
+

@@ -1,6 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
 
-/* Globalni reset i font */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -119,7 +118,6 @@ header {
   cursor: pointer;
 }
 
-/* Ostali stilovi */
 .content-area {
   background-color: #fff;
   padding: 40px;

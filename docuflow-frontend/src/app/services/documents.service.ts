@@ -16,7 +16,7 @@ export interface Document {
 }
 
 export interface UpdateDocumentStatusDto {
-  status?: number;          // status može biti null/undefined ako menjaš samo komentar
+  status?: number;
   commentContent: string;
 }
 

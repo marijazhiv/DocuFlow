@@ -85,6 +85,12 @@
   color: #1565c0;
 }
 
+
+.file-card .status.returnedforedit {
+  background-color: #ffe6cc;
+  color: #a66300;
+}
+
 .file-card .status.approved {
   background-color: #c8e6c9;
   color: #2e7d32;
@@ -179,6 +185,29 @@
   padding-bottom: 5px;
 }
 
+.snackbar {
+  visibility: hidden;
+  min-width: 250px;
+  background-color: #323232;
+  color: #fff;
+  text-align: center;
+  border-radius: 8px;
+  padding: 14px 24px;
+  position: fixed;
+  left: 50%;
+  bottom: 30px;
+  transform: translateX(-50%);
+  z-index: 999;
+  font-size: 16px;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out, bottom 0.3s ease-in-out;
+}
+
+.snackbar.show {
+  visibility: visible;
+  opacity: 1;
+  bottom: 50px;
+}
 
 
 
